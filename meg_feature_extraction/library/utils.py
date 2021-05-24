@@ -10,5 +10,5 @@ def get_trigger_info(camcan_meg_path):
 def get_subjects(camcan_meg_raw_path):
     """Get MEG subjects."""
     out = [cc.split('/')[-1] for cc in sorted(glob.glob(
-        op.join(camcan_meg_raw_path, 'CC??????')))]
+        op.join(camcan_meg_raw_path, 'sub-CC??????')))]
     return out
