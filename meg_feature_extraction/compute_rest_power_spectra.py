@@ -12,14 +12,20 @@ from autoreject import get_rejection_threshold
 import config as cfg
 import library as lib
 
+# Ignore deprecation warnings # PJ
+import warnings
+warnings.filterwarnings("ignore")
 
 subjects = lib.utils.get_subjects(cfg.camcan_meg_raw_path)
+
+# Just run two subjs for now. Destination folder in camcan-derivatives must already exist. # PJ
+subjects = subjects[2:4]
+print(subjects)
 
 max_filter_info_path = op.join(
     cfg.camcan_meg_path,
     "data_nomovecomp/"
     "aamod_meg_maxfilt_00001")
-
 
 def _parse_bads(subject, kind):
     sss_log = op.join(
@@ -60,7 +66,10 @@ def _get_global_reject_ssp(raw):
 
 def _run_maxfilter(raw, subject, kind):
 
-    bads = _parse_bads(subject, kind)
+   # bads = _parse_bads(subject, kind)
+   
+   # skip bad channel checking for now #PJ
+    bads = []
 
     raw.info['bads'] = bads
 
@@ -99,11 +108,14 @@ def _get_global_reject_epochs(raw):
 def _compute_rest_psd(subject, kind):
 
     fname = op.join(
-        cfg.camcan_meg_raw_path,
-        subject, kind, '%s_raw.fif' % kind)
+	 cfg.camcan_meg_raw_path,
+	 subject, kind, 'meg', '%s_%s_task-rest.fif' % (subject, kind))
+	
+
+    print("filename: " + fname) #PJ
 
     raw = mne.io.read_raw_fif(fname)
-    mne.channels.fix_mag_coil_types(raw.info)
+    mne.channels.fix_mag_coil_types(raw.info) # Look into T1/T2 vs T3 mag types / why they're being replaced # PJ
     raw = _run_maxfilter(raw, subject, kind)
     _compute_add_ssp_exg(raw)
 
@@ -139,7 +151,7 @@ def _compute_rest_psd(subject, kind):
     return {'n_events': len(events), 'n_events_good': psd.shape[0]}
 
 
-def _run_all(subject, kind='rest'):
+def _run_all(subject, kind='ses-rest'):
     mne.utils.set_log_level('warning')
     print(subject)
     error = 'None'
@@ -154,10 +166,12 @@ def _run_all(subject, kind='rest'):
     out.update(result)
     return out
 
-
 out = Parallel(n_jobs=40)(
     delayed(_run_all)(subject=subject)
     for subject in subjects)
+
+# Debug # PJ
+#out = _run_all(subjects[0], kind='ses-rest')
 
 out_df = pd.DataFrame(out)
 out_df.to_csv(
