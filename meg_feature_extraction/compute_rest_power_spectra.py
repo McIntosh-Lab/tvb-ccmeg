@@ -12,35 +12,38 @@ from autoreject import get_rejection_threshold
 import config as cfg
 import library as lib
 
-# Ignore deprecation warnings # PJ
-import warnings
-warnings.filterwarnings("ignore")
-
 subjects = lib.utils.get_subjects(cfg.camcan_meg_raw_path)
 
-# Just run two subjs for now. Destination folder in camcan-derivatives must already exist. # PJ
-subjects = subjects[2:4]
-print(subjects)
+# For testing #PJ
+subjects = subjects[0]
 
 max_filter_info_path = op.join(
     cfg.camcan_meg_path,
     "data_nomovecomp/"
     "aamod_meg_maxfilt_00001")
 
-def _parse_bads(subject, kind):
-    sss_log = op.join(
-        max_filter_info_path, subject,
-        kind, "mf2pt2_{kind}_raw.log".format(kind=kind))
 
-    try:
-        bads = lib.preprocessing.parse_bad_channels(sss_log)
-    except Exception as err:
-        print(err)
-        bads = []
-    # first 100 channels ommit the 0.
-    bads = [''.join(['MEG', '0', bb.split('MEG')[-1]])
-            if len(bb) < 7 else bb for bb in bads]
-    return bads
+
+#def _parse_bads(subject, kind):
+#    sss_log = op.join(
+#        max_filter_info_path, subject,
+#        kind, "mf2pt2_{kind}_raw.log".format(kind=kind))
+#
+#    try:
+#        bads = lib.preprocessing.parse_bad_channels(sss_log)
+#    except Exception as err:
+#        print(err)
+#        bads = []
+#    # first 100 channels ommit the 0.
+#    bads = [''.join(['MEG', '0', bb.split('MEG')[-1]])
+#            if len(bb) < 7 else bb for bb in bads]
+#    return bads
+
+
+# Find bad channels rather than read from SSS log (call lib.preprocessing.detect_bad_channels directly)
+# Might be some minor differences due to way find_bad_channels_maxwell is
+# implemented compared to MaxFilter (see documentation) - PJ
+
 
 
 def _get_global_reject_ssp(raw):
@@ -67,9 +70,7 @@ def _get_global_reject_ssp(raw):
 def _run_maxfilter(raw, subject, kind):
 
    # bads = _parse_bads(subject, kind)
-   
-   # skip bad channel checking for now #PJ
-    bads = []
+    bads = lib.preprocessing.detect_bad_channels(raw)
 
     raw.info['bads'] = bads
 
@@ -117,6 +118,7 @@ def _compute_rest_psd(subject, kind):
     raw = mne.io.read_raw_fif(fname)
     mne.channels.fix_mag_coil_types(raw.info) # Look into T1/T2 vs T3 mag types / why they're being replaced # PJ
     raw = _run_maxfilter(raw, subject, kind)
+    
     _compute_add_ssp_exg(raw)
 
     reject = _get_global_reject_epochs(raw)
@@ -152,7 +154,8 @@ def _compute_rest_psd(subject, kind):
 
 
 def _run_all(subject, kind='ses-rest'):
-    mne.utils.set_log_level('warning')
+    #mne.utils.set_log_level('warning') #PJ
+    mne.utils.set_log_level('info') #PJ
     print(subject)
     error = 'None'
     result = dict()
@@ -170,10 +173,7 @@ out = Parallel(n_jobs=40)(
     delayed(_run_all)(subject=subject)
     for subject in subjects)
 
-# Debug # PJ
-#out = _run_all(subjects[0], kind='ses-rest')
-
-out_df = pd.DataFrame(out)
+out_df = pd.DataFrame(out, index=[0])
 out_df.to_csv(
     op.join(
         cfg.derivative_path,
