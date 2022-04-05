@@ -33,14 +33,15 @@ def run_maxfilter(raw, coord_frame='head', destination=None):
 #                bad_channels.append(ch_name)
 #    return bad_channels
 
-def detect_bad_channels(raw):
+def detect_bad_channels(raw, coord_frame='head'):
     """Auto detect bad channels using Maxwell filtering"""
     cal = op.join(_curr_dir, 'sss_params', 'sss_cal.dat')
     ctc = op.join(_curr_dir, 'sss_params', 'ct_sparse.fif')
     
     auto_noisy_chs, auto_flat_chs = find_bad_channels_maxwell(
                                     raw, calibration=cal,
-                                    cross_talk=ctc)
+                                    cross_talk=ctc,
+                                    coord_frame=coord_frame)
     
     bad_channels = auto_noisy_chs + auto_flat_chs
     

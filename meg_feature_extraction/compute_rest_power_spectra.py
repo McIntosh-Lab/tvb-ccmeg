@@ -45,7 +45,6 @@ max_filter_info_path = op.join(
 # implemented compared to MaxFilter (see documentation) - PJ
 
 
-
 def _get_global_reject_ssp(raw):
     eog_epochs = mne.preprocessing.create_eog_epochs(raw)
     if len(eog_epochs) >= 5:
@@ -110,7 +109,7 @@ def _compute_rest_psd(subject, kind):
 
     fname = op.join(
 	 cfg.camcan_meg_raw_path,
-	 subject, kind, 'meg', '%s_%s_task-rest.fif' % (subject, kind))
+	 subject, kind, 'meg', '%s_%s_task-rest_meg.fif' % (subject, kind))
 	
 
     print("filename: " + fname) #PJ
@@ -151,6 +150,9 @@ def _compute_rest_psd(subject, kind):
         out_fname, {'psd': psd, 'freqs': freqs},
         overwrite=True)
     return {'n_events': len(events), 'n_events_good': psd.shape[0]}
+
+# Test subject sub-CC221954 # PJ
+subject = 'sub-CC221954'
 
 
 def _run_all(subject, kind='ses-rest'):
