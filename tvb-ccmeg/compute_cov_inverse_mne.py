@@ -25,8 +25,6 @@ import library as lib
 import clean_data
 
 
-print(clean_data)
-
 def _get_subjects(trans_set, shuffle=True):
     trans = 'trans-%s' % trans_set
     found = os.listdir(op.join(cfg.derivative_path, trans))
@@ -61,69 +59,6 @@ max_filter_info_path = op.join(
     cfg.camcan_meg_path,
     "data_nomovecomp/"
     "aamod_meg_maxfilt_00001")
-
-
-# This parses the bad trial information supplied by CamCAN, which we're not using # PJ
-#def _parse_bads(subject, kind):
-#    sss_log = op.join(
-#        max_filter_info_path, subject,
-#        kind, "mf2pt2_{kind}_raw.log".format(kind=kind))
-
-#    try:
-#        bads = lib.preprocessing.parse_bad_channels(sss_log)
-#    except Exception as err:
-#        print(err)
-#        bads = []
-#    # first 100 channels omit the 0.
-#    bads = [''.join(['MEG', '0', bb.split('MEG')[-1]])
-#            if len(bb) < 7 else bb for bb in bads]
-#    return bads
-
-
-def _get_global_reject_ssp(raw):
-    eog_epochs = mne.preprocessing.create_eog_epochs(raw)
-    if len(eog_epochs) >= 5:
-        reject_eog = get_rejection_threshold(eog_epochs, decim=8)
-        del reject_eog['eog']
-    else:
-        reject_eog = None
-
-    ecg_epochs = mne.preprocessing.create_ecg_epochs(raw)
-    if len(ecg_epochs) >= 5:
-        reject_ecg = get_rejection_threshold(ecg_epochs, decim=8)
-    else:
-        reject_eog = None
-
-    if reject_eog is None:
-        reject_eog = reject_ecg
-    if reject_ecg is None:
-        reject_ecg = reject_eog
-    return reject_eog, reject_ecg
-
-
-#def _run_maxfilter(raw, subject, kind, coord_frame="head"):
-#
-#    # Detect bad channels automatically, rather than reading from file #PJ
-#    #bads = _parse_bads(subject, kind)
-#    bads = lib.preprocessing.detect_bad_channels(raw, coord_frame)
-#
-#    raw.info['bads'] = bads
-#    
-#    raw = lib.preprocessing.run_maxfilter(raw, coord_frame=coord_frame)
-#    return raw
-
-
-def _compute_add_ssp_exg(raw):
-    reject_eog, reject_ecg = _get_global_reject_ssp(raw)
-
-    proj_eog = mne.preprocessing.compute_proj_eog(
-        raw, average=True, reject=reject_eog, n_mag=1, n_grad=1, n_eeg=1)
-
-    proj_ecg = mne.preprocessing.compute_proj_ecg(
-        raw, average=True, reject=reject_ecg, n_mag=1, n_grad=1, n_eeg=1)
-
-    raw.add_proj(proj_eog[0])
-    raw.add_proj(proj_ecg[0])
 
 
 def _get_global_reject_epochs(raw, decim):
@@ -280,14 +215,16 @@ def _compute_mne_power(subject, kind, freqs):
         raw.crop(0, 300)
 
 
-    # Run MaxFilter without movement compensation (don't know why they run it without movement compensation - revisit) #PJ
-    #raw = _run_maxfilter(raw, subject, kind)
-    
+    # Run MaxFilter without movement compensation (don't know why they run it without movement compensation - revisit) #PJ  
     # running maxfilter from clean_data.py module
-    clean_data.run_maxfilter(raw,subject,kind,'head')
+    filtered = clean_data.run_maxfilter(raw,'head')
+    print('im here')
+    print(filtered)
     
-    # Project EOG and ECG components out of raw data #PJ
-    _compute_add_ssp_exg(raw)
+    # Project EOG and ECG components out of raw data #PJ    
+    #running projections from clean_data.py module
+    filtered_rejected = clean_data.compute_add_ssp_exg(filtered)
+    print(filtered_rejected)
 
     # get empty room
     #fname_er = op.join(
@@ -305,34 +242,31 @@ def _compute_mne_power(subject, kind, freqs):
         "emptyroom_%s.fif" % subject[4:])
 
     raw_er = mne.io.read_raw_fif(fname_er)
-    mne.channels.fix_mag_coil_types(raw.info)
-
-    #raw_er = _run_maxfilter(raw_er, subject, kind, coord_frame='meg')
+    mne.channels.fix_mag_coil_types(filtered_rejected.info)
     
     # running maxfilter from clean_data.py module
-    clean_data.run_maxfilter(raw_er, 'meg')
+    filtered_er = clean_data.run_maxfilter(raw_er, 'meg')
     
-    # Add projections from rest recording to empty room (not sure why exactly) #PJ
-    #raw_er.info["projs"] += raw.info["projs"] # This gives an error, corrected to below #PJ
-    raw_er.add_proj(raw.info["projs"])
-    
+    # add projections from resting-state recording to empty room recording
+    filtered_rejected_er = filtered_er.add_proj(filtered_rejected.info["projs"])
+
     # Compute covariance in empty room recording for MNE #PJ
-    cov = mne.compute_raw_covariance(raw_er, method='oas')
+    cov = mne.compute_raw_covariance(filtered_rejected_er, method='oas')
     
     # compute before band-pass of interest
 
     event_length = 5.
     event_overlap = 0.
-    raw_length = raw.times[-1]
+    filtered_length = filtered_rejected.times[-1]
     events = mne.make_fixed_length_events(
-        raw,
-        duration=event_length, start=0, stop=raw_length - event_length)
+        filtered_rejected,
+        duration=event_length, start=0, stop=filtered_length - event_length)
 
     #######################################################################
     # Compute the forward and inverse
     # -------------------------------
 
-    info = mne.Epochs(raw, events=events, tmin=0, tmax=event_length,
+    info = mne.Epochs(filtered_rejected, events=events, tmin=0, tmax=event_length,
                       baseline=None, reject=None, preload=False,
                       decim=10).info
     fwd = mne.make_forward_solution(info, trans, src, bem)
@@ -369,10 +303,10 @@ def _compute_mne_power(subject, kind, freqs):
     
     for fmin, fmax, band in freqs:
         print(f"computing {subject}: {fmin} - {fmax} Hz")
-        this_raw = raw.copy()
-        this_raw.filter(fmin, fmax, n_jobs=1)
-        reject = _get_global_reject_epochs(this_raw, decim=5) # Get rejection threshold for band
-        epochs = mne.Epochs(this_raw, events=events, tmin=0, tmax=event_length,
+        this_filtered = filtered_rejected.copy()
+        this_filtered.filter(fmin, fmax, n_jobs=1)
+        reject = _get_global_reject_epochs(this_filtered, decim=5) # Get rejection threshold for band
+        epochs = mne.Epochs(this_filtered, events=events, tmin=0, tmax=event_length,
                             baseline=None, reject=reject, preload=True,
                             decim=5)
         if DEBUG:
