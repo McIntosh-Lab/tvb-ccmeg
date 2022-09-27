@@ -19,11 +19,18 @@ import compute_cov_inverse_mne
 #import logging
 
 
-
+# points to big code block for now:
 compute_cov_inverse_mne
 
 
+#some pseudo code for later
+# 1. module for i/o
+# 2. clean_data.run_maxfilter(raw,'head')
+# clean_data.run_maxfilter(raw_er,'meg')
+   
 
 
-if __name__ == "__main__":
-    main()
+
+
+#if __name__ == "__main__":
+#    main()
