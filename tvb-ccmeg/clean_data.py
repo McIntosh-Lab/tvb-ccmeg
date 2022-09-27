@@ -12,9 +12,9 @@ import sys
 
 import mne
 import library as lib
+import numpy as np
 
-def run_maxfilter(raw, subject, kind, coord_frame):
-    args = sys.argv[1:] # three args: raw,subject,kind
+def detect_and_maxfilter(raw, coord_frame):
     
     print(coord_frame)
     
@@ -23,19 +23,19 @@ def run_maxfilter(raw, subject, kind, coord_frame):
 
     raw.info['bads'] = bads
     
-    raw = lib.preprocessing.run_maxfilter(raw, coord_frame=coord_frame)
-    return raw
-
-
-
-
-
-
-
-
+    max_filtered = lib.preprocessing.run_maxfilter(raw, coord_frame=coord_frame)
+    return max_filtered
 
 
 
 
 if __name__ == "__main__":
-    main()
+    # args = sys.argv[1:] # three args: raw,subject,kind
+    # assume order of raw, coord_frame)
+    # also assume these are file paths
+    raw = np.load(sys.argv[1])
+    coord_frame = np.load(sys.argv[2])
+    save_path = sys.argv[3]
+
+    filtered = run_maxfilter(raw, coord_frame)
+    np.save(save_path, filtered)

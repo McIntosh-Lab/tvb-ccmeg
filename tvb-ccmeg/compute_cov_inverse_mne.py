@@ -310,7 +310,7 @@ def _compute_mne_power(subject, kind, freqs):
     #raw_er = _run_maxfilter(raw_er, subject, kind, coord_frame='meg')
     
     # running maxfilter from clean_data.py module
-    clean_data.run_maxfilter(raw_er, subject, kind, 'meg')
+    clean_data.run_maxfilter(raw_er, 'meg')
     
     # Add projections from rest recording to empty room (not sure why exactly) #PJ
     #raw_er.info["projs"] += raw.info["projs"] # This gives an error, corrected to below #PJ
