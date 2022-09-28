@@ -16,19 +16,45 @@ from autoreject import get_rejection_threshold
 import library as lib
 import numpy as np
 
+def _run_maxfilter(raw, coord_frame):
+    # default coord_frame = 'head'
+    
+    # Detect bad channels automatically, rather than reading from file #PJ
+    bads = lib.preprocessing.detect_bad_channels(raw, coord_frame)
+
+    raw.info['bads'] = bads
+    
+    filtered = lib.preprocessing.run_maxfilter(raw, coord_frame=coord_frame)
+
+    return filtered
+
+
+def _compute_add_ssp_exg(raw):
+    reject_eog, reject_ecg = _get_global_reject_ssp(raw)
+
+    proj_eog = mne.preprocessing.compute_proj_eog(
+        raw, average=True, reject=reject_eog, n_mag=1, n_grad=1, n_eeg=1, n_jobs=-1)
+
+    proj_ecg = mne.preprocessing.compute_proj_ecg(
+        raw, average=True, reject=reject_ecg, n_mag=1, n_grad=1, n_eeg=1, n_jobs=-1)
+
+    cleaned = raw.add_proj(proj_eog[0])
+    cleaned = cleaned.add_proj(proj_ecg[0])
+    
+    return cleaned
 
 
 def _get_global_reject_ssp(raw):
     eog_epochs = mne.preprocessing.create_eog_epochs(raw)
     if len(eog_epochs) >= 5:
-        reject_eog = get_rejection_threshold(eog_epochs, decim=8)
+        reject_eog = get_rejection_threshold(eog_epochs, decim=8) #check decim aliasing warning for here
         del reject_eog['eog']
     else:
         reject_eog = None
 
     ecg_epochs = mne.preprocessing.create_ecg_epochs(raw)
     if len(ecg_epochs) >= 5:
-        reject_ecg = get_rejection_threshold(ecg_epochs, decim=8)
+        reject_ecg = get_rejection_threshold(ecg_epochs, decim=8) #check decim aliasing warning for here
     else:
         reject_eog = None
 
@@ -39,38 +65,34 @@ def _get_global_reject_ssp(raw):
     return reject_eog, reject_ecg
 
 
-def compute_add_ssp_exg(raw):
-    reject_eog, reject_ecg = _get_global_reject_ssp(raw)
+def get_global_reject_epochs(raw, decim):
+    duration = 3.
+    events = mne.make_fixed_length_events(
+        raw, id=3000, start=0, duration=duration)
 
-    proj_eog = mne.preprocessing.compute_proj_eog(
-        raw, average=True, reject=reject_eog, n_mag=1, n_grad=1, n_eeg=1)
+    epochs = mne.Epochs(
+        raw, events, event_id=3000, tmin=0, tmax=duration, proj=False,
+        baseline=None, reject=None)
+    epochs.apply_proj()
+    epochs.load_data()
+    epochs.pick_types(meg=True)
+    reject = get_rejection_threshold(epochs, decim=decim)
+    return reject
 
-    proj_ecg = mne.preprocessing.compute_proj_ecg(
-        raw, average=True, reject=reject_ecg, n_mag=1, n_grad=1, n_eeg=1)
 
-    rejected = raw.add_proj(proj_eog[0])
-    rejected = raw.add_proj(proj_ecg[0])
-    return rejected
+def clean_data(raw, raw_er):
 
-
-def run_maxfilter(raw, coord_frame):
-    # default coord_frame = 'head'
+    # Run MaxFilter without movement compensation (don't know why they run it without movement compensation - revisit) #PJ
+    filtered = _run_maxfilter(raw, 'head')
+    # Project EOG and ECG components out of raw data #PJ
+    cleaned = _compute_add_ssp_exg(filtered)
     
-    # Detect bad channels automatically, rather than reading from file #PJ
-    bads = lib.preprocessing.detect_bad_channels(raw, coord_frame)
-    print('bads coord_frame')
-    print(coord_frame)
-
-    raw.info['bads'] = bads
+    # maxfilter emptyroom data
+    filtered_er = _run_maxfilter(raw_er, 'meg')
+    # Add projections from rest recording to empty room (not sure why exactly) #PJ
+    cleaned_er = filtered_er.add_proj(filtered.info["projs"])   
     
-    filtered = lib.preprocessing.run_maxfilter(raw, coord_frame=coord_frame)
-    print('filtered coord_frame')
-    print(coord_frame)
-    return filtered
-
-
-
-
+    return cleaned, cleaned_er
 
 
 

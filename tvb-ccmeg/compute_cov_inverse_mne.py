@@ -22,58 +22,19 @@ from autoreject import get_rejection_threshold
 
 import config as cfg
 import library as lib
+import stage_data
 import clean_data
 
 
-def _get_subjects(trans_set, shuffle=True):
-    trans = 'trans-%s' % trans_set
-    found = os.listdir(op.join(cfg.derivative_path, trans))
-    if shuffle:
-        random.seed(42)
-        random.shuffle(found)
-    if trans_set == 'halifax':
-        #subjects = [sub[4:4 + 8] for sub in found]
-        subjects = [sub[0:-10] for sub in found]
-    elif trans_set == 'krieger':
-        subjects = ['CC' + sub[:6] for sub in found]
-    print("found", len(subjects), "coregistrations")
-    return subjects, [op.join(cfg.derivative_path, trans, ff) for ff in found]
+#N_JOBS = 40
 
-#subjects = lib.utils.get_subjects(cfg.camcan_meg_raw_path)
-
-# Just load Halifax transforms for now #PJ
-subjects, trans = _get_subjects(trans_set='halifax')
-#subjects, trans = _get_subjects(trans_set='krieger')
-#subject2, trans2 = _get_subjects(trans_set='halifax')
-#for ii in range(len(subject2)):
-#    if subject2[ii] not in subjects:
-#        subjects.append(subject2[ii])
-#        trans.append(trans2[ii])
-
-# Combine subject and trans in dictionary #PJ
-trans_map = dict(zip(subjects, trans))
-
-N_JOBS = 40
-
-max_filter_info_path = op.join(
-    cfg.camcan_meg_path,
-    "data_nomovecomp/"
-    "aamod_meg_maxfilt_00001")
+#max_filter_info_path = op.join(
+#    cfg.camcan_meg_path,
+#    "data_nomovecomp/"
+#    "aamod_meg_maxfilt_00001")
 
 
-def _get_global_reject_epochs(raw, decim):
-    duration = 3.
-    events = mne.make_fixed_length_events(
-        raw, id=3000, start=0, duration=duration)
 
-    epochs = mne.Epochs(
-        raw, events, event_id=3000, tmin=0, tmax=duration, proj=False,
-        baseline=None, reject=None)
-    epochs.apply_proj()
-    epochs.load_data()
-    epochs.pick_types(meg=True)
-    reject = get_rejection_threshold(epochs, decim=decim)
-    return reject
 
 
 def _apply_inverse_cov(
@@ -186,7 +147,7 @@ def _compute_mne_power(subject, kind, freqs):
     '''
     
     # Get transform filename #PJ
-    trans = trans_map[subject]
+#    trans = trans_map[subject]
     
     # Load boundary element model - Assumes run_make_boundary_element_models.py already run #PJ
     bem = cfg.mne_camcan_freesurfer_path + \
@@ -202,29 +163,21 @@ def _compute_mne_power(subject, kind, freqs):
     #        cfg.camcan_meg_raw_path,
     #        subject, kind, '%s_raw.fif' % kind)
 
-    fname = op.join(
-	 cfg.camcan_meg_raw_path,
-	 subject, kind, 'meg', '%s_%s_task-rest_meg.fif' % (subject, kind))
+#    fname = op.join(
+#	 cfg.camcan_meg_raw_path,
+#	 subject, kind, 'meg', '%s_%s_task-rest_meg.fif' % (subject, kind))
 
-    raw = mne.io.read_raw_fif(fname)
-    mne.channels.fix_mag_coil_types(raw.info) #Fixes size labelling for some coils # PJ
-    if DEBUG:
-        # raw.crop(0, 180)
-        raw.crop(0, 120)
-    else:
-        raw.crop(0, 300)
+#    raw = mne.io.read_raw_fif(fname)
+#    mne.channels.fix_mag_coil_types(raw.info) #Fixes size labelling for some coils # PJ
+#    if DEBUG:
+#        # raw.crop(0, 180)
+#        raw.crop(0, 120)
+#    else:
+#        raw.crop(0, 300)
 
 
-    # Run MaxFilter without movement compensation (don't know why they run it without movement compensation - revisit) #PJ  
-    # running maxfilter from clean_data.py module
-    filtered = clean_data.run_maxfilter(raw,'head')
-    print('im here')
-    print(filtered)
     
-    # Project EOG and ECG components out of raw data #PJ    
-    #running projections from clean_data.py module
-    filtered_rejected = clean_data.compute_add_ssp_exg(filtered)
-    print(filtered_rejected)
+
 
     # get empty room
     #fname_er = op.join(
@@ -234,21 +187,21 @@ def _compute_mne_power(subject, kind, freqs):
     #    "emptyroom_%s.fif" % subject)
 
     # Get empty room with new release filepath. #PJ
-    fname_er = op.join(
-        cfg.camcan_meg_path,
-        "emptyroom",
-        subject,
-        "emptyroom",
-        "emptyroom_%s.fif" % subject[4:])
+#    fname_er = op.join(
+#        cfg.camcan_meg_path,
+#        "emptyroom",
+#        subject,
+#        "emptyroom",
+#        "emptyroom_%s.fif" % subject[4:])
 
-    raw_er = mne.io.read_raw_fif(fname_er)
-    mne.channels.fix_mag_coil_types(filtered_rejected.info)
+#    raw_er = mne.io.read_raw_fif(fname_er)
+#    mne.channels.fix_mag_coil_types(raw_er.info)
     
     # running maxfilter from clean_data.py module
-    filtered_er = clean_data.run_maxfilter(raw_er, 'meg')
+#    filtered_er = clean_data.run_maxfilter(raw_er, 'meg')
     
     # add projections from resting-state recording to empty room recording
-    filtered_rejected_er = filtered_er.add_proj(filtered_rejected.info["projs"])
+    #filtered_rejected_er = filtered_er.add_proj(filtered_rejected.info["projs"])
 
     # Compute covariance in empty room recording for MNE #PJ
     cov = mne.compute_raw_covariance(filtered_rejected_er, method='oas')
@@ -304,8 +257,8 @@ def _compute_mne_power(subject, kind, freqs):
     for fmin, fmax, band in freqs:
         print(f"computing {subject}: {fmin} - {fmax} Hz")
         this_filtered = filtered_rejected.copy()
-        this_filtered.filter(fmin, fmax, n_jobs=1)
-        reject = _get_global_reject_epochs(this_filtered, decim=5) # Get rejection threshold for band
+        this_filtered.filter(fmin, fmax, n_jobs=1) 
+        reject = clean_data.get_global_reject_epochs(this_filtered, decim=5) # Get rejection threshold for band
         epochs = mne.Epochs(this_filtered, events=events, tmin=0, tmax=event_length,
                             baseline=None, reject=reject, preload=True,
                             decim=5)
@@ -409,22 +362,22 @@ freqs = [(0.1, 1.5, "low"),
 
 
 
-DEBUG = True
-if DEBUG:
-    N_JOBS = 1
+#DEBUG = True
+#if DEBUG:
+#    N_JOBS = 1
     
     # Just include test subjs for now # PJ
     #test_subjs = ['sub-CC320107', 'sub-CC420356', 'sub-CC510392', 'sub-CC221954']
-    test_subjs = ['sub-CC221954']
-    subjects = test_subjs
-    trans_map = {this_subj: trans_map[this_subj] for this_subj in test_subjs }
+#    test_subjs = ['sub-CC221954']
+#    subjects = test_subjs
+#    trans_map = {this_subj: trans_map[this_subj] for this_subj in test_subjs }
     
     # Just two freq bands for now #PJ
-    freqs = freqs[2:4]
+#    freqs = freqs[2:4]
 
-out = Parallel(n_jobs=N_JOBS)(
-    delayed(_run_all)(subject=subject, freqs=freqs, kind='ses-rest')
-    for subject in subjects)
+#out = Parallel(n_jobs=N_JOBS)(
+#    delayed(_run_all)(subject=subject, freqs=freqs, kind='ses-rest')
+#    for subject in subjects)
 
 
 #out = _run_all(subject=subject, freqs=freqs, kind='ses-rest')
