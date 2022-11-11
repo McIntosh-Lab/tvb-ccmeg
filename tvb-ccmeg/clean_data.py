@@ -4,7 +4,7 @@
 #
 # Description: Apply max filtering & reject EOG/ECG epochs
 #
-# Author: Kelly Shen
+# Author: Denis A. Engemann <denis.engemann@gmail.com> & Kelly Shen
 #
 # License: BSD (3-clause)
 

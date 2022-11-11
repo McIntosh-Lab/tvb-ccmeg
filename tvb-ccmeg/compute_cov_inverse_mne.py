@@ -127,128 +127,80 @@ def _apply_inverse_cov(
 
 def _compute_mne_power(subject, kind, freqs):
 
-    ###########################################################################
-    # Compute source space
-    # -------------------
-    src = mne.setup_source_space(subject, spacing='oct6', add_dist=False,
-                                 subjects_dir=cfg.mne_camcan_freesurfer_path)
-    
-    
-    '''
-    # This section was added to compute the transform from head coords to MRI coords (rather than using Krieger/Halifax" #PJ
-    # Update - now using the Halifax transforms provided by Tim Bardouille https://github.com/tbardouille/camcan_coreg #PJ
-    
-    meg_bids_path = mne_bids.BIDSPath(subject=subject[4:], root=cfg.camcan_meg_raw_path, session='rest', task='rest', extension='.fif', check=False)
-    t1_bids_path = mne_bids.BIDSPath(subject=subject[4:], root=cfg.camcan_path + '/mri/pipeline/release004/BIDS_20190411/anat')
-    trans = mne_bids.get_head_mri_trans(meg_bids_path,
-                                        t1_bids_path = t1_bids_path,
-                                        fs_subject=subject,
-                                        fs_subjects_dir=cfg.mne_camcan_freesurfer_path)
-    '''
-    
-    # Get transform filename #PJ
-#    trans = trans_map[subject]
-    
-    # Load boundary element model - Assumes run_make_boundary_element_models.py already run #PJ
-    bem = cfg.mne_camcan_freesurfer_path + \
-        "/%s/bem/%s-meg-bem.fif" % (subject, subject)
-
-
-    ###########################################################################
-    # Compute handle MEG data
-    # -----------------------
-
-    # Change to new BIDS format - PJ
-    #    fname = op.join(
-    #        cfg.camcan_meg_raw_path,
-    #        subject, kind, '%s_raw.fif' % kind)
-
-#    fname = op.join(
-#	 cfg.camcan_meg_raw_path,
-#	 subject, kind, 'meg', '%s_%s_task-rest_meg.fif' % (subject, kind))
-
-#    raw = mne.io.read_raw_fif(fname)
-#    mne.channels.fix_mag_coil_types(raw.info) #Fixes size labelling for some coils # PJ
-#    if DEBUG:
-#        # raw.crop(0, 180)
-#        raw.crop(0, 120)
-#    else:
-#        raw.crop(0, 300)
-
-
-    
-
-
-    # get empty room
-    #fname_er = op.join(
-    #    cfg.camcan_meg_path,
-    #    "emptyroom",
-    #    subject,
-    #    "emptyroom_%s.fif" % subject)
-
-    # Get empty room with new release filepath. #PJ
-#    fname_er = op.join(
-#        cfg.camcan_meg_path,
-#        "emptyroom",
-#        subject,
-#        "emptyroom",
-#        "emptyroom_%s.fif" % subject[4:])
-
-#    raw_er = mne.io.read_raw_fif(fname_er)
-#    mne.channels.fix_mag_coil_types(raw_er.info)
-    
-    # running maxfilter from clean_data.py module
-#    filtered_er = clean_data.run_maxfilter(raw_er, 'meg')
-    
-    # add projections from resting-state recording to empty room recording
-    #filtered_rejected_er = filtered_er.add_proj(filtered_rejected.info["projs"])
-
-    # Compute covariance in empty room recording for MNE #PJ
-    cov = mne.compute_raw_covariance(filtered_rejected_er, method='oas')
-    
-    # compute before band-pass of interest
-
-    event_length = 5.
-    event_overlap = 0.
-    filtered_length = filtered_rejected.times[-1]
-    events = mne.make_fixed_length_events(
-        filtered_rejected,
-        duration=event_length, start=0, stop=filtered_length - event_length)
-
-    #######################################################################
-    # Compute the forward and inverse
-    # -------------------------------
-
-    info = mne.Epochs(filtered_rejected, events=events, tmin=0, tmax=event_length,
-                      baseline=None, reject=None, preload=False,
-                      decim=10).info
-    fwd = mne.make_forward_solution(info, trans, src, bem)
-    inv = make_inverse_operator(info, fwd, cov)
-    del fwd
-
-    #######################################################################
-    # Compute label time series and do envelope correlation ### I think he meant 'covariance' #PJ
-    # -----------------------------------------------------
-    
-    # This section gets surface source labels from MNE sample data #PJ
-    
-    #mne_subjects_dir = "/storage/inria/agramfor/MNE-sample-data/subjects"
-    
-    sample_data_folder = mne.datasets.sample.data_path()
-    mne_subjects_dir = os.path.join(sample_data_folder, 'subjects')
-    
-    #labels = mne.read_labels_from_annot('fsaverage', 'aparc_sub',
-    #                                    subjects_dir=mne_subjects_dir)
-    
-    # not sure difference between aparc_sub and aparc_a2009s #PJ
-    labels = mne.read_labels_from_annot('fsaverage', 'aparc.a2009s',
-                                        subjects_dir=mne_subjects_dir)
-    
-    # Warp labels to this subject's surface #PJ
-    labels = mne.morph_labels(
-        labels, subject_from='fsaverage', subject_to=subject,
-        subjects_dir=cfg.mne_camcan_freesurfer_path)
-    labels = [ll for ll in labels if 'unknown' not in ll.name]
+#    ###########################################################################
+#    # Compute source space
+#    # -------------------
+#    src = mne.setup_source_space(subject, spacing='oct6', add_dist=False,
+#                                 subjects_dir=cfg.mne_camcan_freesurfer_path)
+#    
+#    
+#    '''
+#    # This section was added to compute the transform from head coords to MRI coords (rather than using Krieger/Halifax" #PJ
+#    # Update - now using the Halifax transforms provided by Tim Bardouille https://github.com/tbardouille/camcan_coreg #PJ
+#    
+#    meg_bids_path = mne_bids.BIDSPath(subject=subject[4:], root=cfg.camcan_meg_raw_path, session='rest', task='rest', extension='.fif', check=False)
+#    t1_bids_path = mne_bids.BIDSPath(subject=subject[4:], root=cfg.camcan_path + '/mri/pipeline/release004/BIDS_20190411/anat')
+#    trans = mne_bids.get_head_mri_trans(meg_bids_path,
+#                                        t1_bids_path = t1_bids_path,
+#                                        fs_subject=subject,
+#                                        fs_subjects_dir=cfg.mne_camcan_freesurfer_path)
+#    '''
+#    
+#    # Get transform filename #PJ
+##    trans = trans_map[subject]
+#    
+#    # Load boundary element model - Assumes run_make_boundary_element_models.py already run #PJ
+#    bem = cfg.mne_camcan_freesurfer_path + \
+#        "/%s/bem/%s-meg-bem.fif" % (subject, subject)
+#
+#
+#
+#    # Compute covariance in empty room recording for MNE #PJ
+#    cov = mne.compute_raw_covariance(filtered_rejected_er, method='oas')
+#    
+#    # compute before band-pass of interest
+#
+#    event_length = 5.
+#    event_overlap = 0.
+#    filtered_length = filtered_rejected.times[-1]
+#    events = mne.make_fixed_length_events(
+#        filtered_rejected,
+#        duration=event_length, start=0, stop=filtered_length - event_length)
+#
+#    #######################################################################
+#    # Compute the forward and inverse
+#    # -------------------------------
+#
+#    info = mne.Epochs(filtered_rejected, events=events, tmin=0, tmax=event_length,
+#                      baseline=None, reject=None, preload=False,
+#                      decim=10).info
+#    fwd = mne.make_forward_solution(info, trans, src, bem)
+#    inv = make_inverse_operator(info, fwd, cov)
+#    del fwd
+#
+#    #######################################################################
+#    # Compute label time series and do envelope correlation ### I think he meant 'covariance' #PJ
+#    # -----------------------------------------------------
+#    
+#    # This section gets surface source labels from MNE sample data #PJ
+#    
+#    #mne_subjects_dir = "/storage/inria/agramfor/MNE-sample-data/subjects"
+#    
+#    sample_data_folder = mne.datasets.sample.data_path()
+#    mne_subjects_dir = os.path.join(sample_data_folder, 'subjects')
+#    
+#    #labels = mne.read_labels_from_annot('fsaverage', 'aparc_sub',
+#    #                                    subjects_dir=mne_subjects_dir)
+#    
+#    # not sure difference between aparc_sub and aparc_a2009s #PJ
+#    labels = mne.read_labels_from_annot('fsaverage', 'aparc.a2009s',
+#                                        subjects_dir=mne_subjects_dir)
+#    
+#    # Warp labels to this subject's surface #PJ
+#    labels = mne.morph_labels(
+#        labels, subject_from='fsaverage', subject_to=subject,
+#        subjects_dir=cfg.mne_camcan_freesurfer_path)
+#    labels = [ll for ll in labels if 'unknown' not in ll.name]
 
     
     # Band-pass signal to frequency band, compute sensor covariance, project to surface labels, compute covariance between labels #PJ

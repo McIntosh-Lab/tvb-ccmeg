@@ -4,7 +4,7 @@
 #
 # Description: load and get Cam-CAN MEG data ready for pipe
 #
-# Author: Kelly Shen
+# Authors: Denis A. Engemann <denis.engemann@gmail.com> & Kelly Shen
 #
 # License: BSD (3-clause)
 
@@ -25,7 +25,7 @@ def _get_meg(subject, task):
 
 
 def _get_transform(subject):
-    trans = 'trans-halifax'
+    trans = 'trans-halifax'     # using the Halifax transforms provided by Tim Bardouille https://github.com/tbardouille/camcan_coreg #PJ
     found = os.listdir(op.join(cfg.derivative_path, trans))
     found_subj = [sub for sub in found if subject in sub][0]
     return op.join(cfg.derivative_path, trans, found_subj)

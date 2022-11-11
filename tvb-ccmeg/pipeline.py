@@ -8,19 +8,16 @@
 #
 # License: BSD (3-clause)
 
-import sys,argparse
+import sys,os,argparse
+import logging
+import errno
 
 import stage_data as stage
 import clean_data as clean
 import compute_cov_inverse_mne
 
-# some stuff i may need later
-#import os
-#import os.path as op
-#import mne
-
-# some stuff i def need later
-#import logging
+import config as cfg
+import numpy as np
 
 
 class MyParser(argparse.ArgumentParser):
@@ -32,26 +29,69 @@ class MyParser(argparse.ArgumentParser):
 class Usage(Exception):
     def __init__(self, msg):
         self.msg = msg
+        
+        
+        
+def main(args):
 
-def main():
-    parser = MyParser(description='Cam-CAN MEG pipe wrapper. Runs a single subject')
-    parser.add_argument('-subj', dest="ID", type=str, nargs=1, help='subject ID')
-    parser.add_argument('-ses', dest="session", type=str, nargs=1, help='task type, e.g., ses-rest')
     
-    argsa = parser.parse_args()
-    
-    if (argsa.ID==None):
+    if (args.ID==None):
         parser.print_help()
         exit()
     
-    if (argsa.session==None):
+    if (args.session==None):
         parser.print_help()
         exit()
             
-    subject = argsa.ID[0]
-    task = argsa.session[0]
+    subject = args.ID[0]
+    task = args.session[0]
     
     print("Subject ID: ", subject)
+
+
+    if not args.outdir:
+        outpath = f"{cfg.derivative_path}/{subject}"
+    else:
+        outpath = f"{args.outdir}/{subject}"
+        
+    try:
+        os.mkdir(outpath)
+    except OSError as exc:
+        if exc.errno != errno.EEXIST:
+            raise
+        pass
+        #add to log that directory exists as warning, remove 'pass'
+
+    file_handler = logging.FileHandler(filename=f"{outpath}/{subject}-pipeline.log")
+    stdout_handler = logging.StreamHandler(stream=sys.stdout)
+    handlers = [file_handler, stdout_handler]
+
+    logging.basicConfig(
+            level=logging.DEBUG, 
+            format='[%(asctime)s] {%(filename)s:%(lineno)d} %(levelname)s - %(message)s',
+            handlers=handlers
+    )
+
+    logger = logging.getLogger()
+
+#    # Create and configure logger
+#    logging.basicConfig(filename=f"{outpath}/{subject}-pipeline.log",
+#                    format='%(asctime)s %(message)s',
+#                    filemode='w')
+
+#    log = logging.getLogger()
+#    sys.stdout = LoggerWriter(log.debug)
+#    sys.stderr = LoggerWriter(log.warning)
+
+    #logger = logging.getLogger()
+    # logger.setLevel(logging.DEBUG)
+
+#    handler = logging.StreamHandler(sys.stdout)
+    # handler.setLevel(logging.DEBUG)
+#    formatter = logging.Formatter('%(asctime)s - %(name)s - %(message)s')
+#    handler.setFormatter(formatter)
+    # logger.addHandler(handler)
+    
 
 
     # specify some customizable pipeline parameters
@@ -65,18 +105,22 @@ def main():
     print(cleaned_meg)
     print(cleaned_er)
     
+
+    
+    cleaned_meg_npy = cleaned_meg.get_data()
+    np.save(file=f"{outpath}/{subject}-cleaned-meg.npy", arr=cleaned_meg_npy)
+    
+    cleaned_er_npy = cleaned_er.get_data()
+    np.save(file=f"{outpath}/{subject}-cleaned-er.npy", arr=cleaned_er_npy)
+    
 #    out = Parallel(n_jobs=N_JOBS)(
     #delayed(_run_all)(subject=subject, freqs=freqs, kind='ses-rest')
     #for subject in subjects)
 
     
-# points to big code block for now:
+# original big code block I'm grabbing these from:
 #compute_cov_inverse_mne    
 
-#some pseudo code for later
-# 1. module for i/o
-# 2. clean_data.run_maxfilter(raw,'head')
-# clean_data.run_maxfilter(raw_er,'meg')
    
 
 
@@ -84,5 +128,18 @@ def main():
 # python pipeline.py -subj sub-CC221954 -ses ses-rest
 
 
+
 if __name__ == "__main__":
-    main()
+    
+    
+    
+    parser = MyParser(description='Cam-CAN MEG pipe wrapper. Runs a single subject')
+    parser.add_argument('-subj', dest="ID", type=str, nargs=1, help='subject ID')
+    parser.add_argument('-ses', dest="session", type=str, nargs=1, help='task type, e.g., ses-rest')
+    # parser.add_argument('-out', dest="outdir", type=str, nargs=1, default=os.getcwd(), help='output directory, default current wd')
+    parser.add_argument('-out', dest="outdir", type=str, nargs=1, help='output directory, default current wd')
+    
+    args = parser.parse_args()
+    
+    print(args)
+    main(args)
