@@ -12,6 +12,10 @@ import mne              # Need MNE Python
 import preprocess       # Module with all the preprocessing functions
 import compute_source   # Module with functions to go from sensor space to source space
 
+# Identify calibration and cross-talk files (important for Maxwell filtering)
+calibration = '/home/sdobri/Software/CamCAN/tvb-ccmeg/tvb-ccmeg/sss_params/sss_cal.dat'
+cross_talk = '/home/sdobri/Software/CamCAN/tvb-ccmeg/tvb-ccmeg/sss_params/ct_sparse.fif'
+
 # Identify the files to process (only one subject for now)
 raw_fname = '/home/sdobri/Documents/McLab/CamCAN/ccmeg/ccmeg_data/camCAN724/cc700/meg/pipeline/release005/BIDSsep/rest/sub-CC221954/ses-rest/meg/sub-CC221954_ses-rest_task-rest_meg.fif'
 er_fname = '/home/sdobri/Documents/McLab/CamCAN/ccmeg/ccmeg_data/camCAN724/cc700/meg/pipeline/release005/BIDSsep/emptyroom/sub-CC221954/emptyroom/emptyroom_CC221954.fif'
@@ -41,7 +45,7 @@ mne.chpi.write_head_pos(output_dir + 'head_pos.pos', head_pos)
 report.add_figure(fig=mne.viz.plot_head_positions(head_pos, mode='traces', show=False),title='Head Motion')
 
 # Apply Maxwell filtering with head motion correction
-raw = preprocess.maxwell_filter(raw, head_pos)
+raw = preprocess.maxwell_filter(raw, head_pos, calibration, cross_talk)
 # Add Maxwell filtered PSD to report
 report.add_figure(fig=raw.compute_psd(fmax=350).plot(show=False), title='Maxwell Filtered')
 

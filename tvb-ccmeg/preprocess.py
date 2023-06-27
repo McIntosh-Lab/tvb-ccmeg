@@ -47,14 +47,14 @@ def compute_head_position(raw):
     return head_pos
 
 
-def maxwell_filter(raw, head_pos):
+def maxwell_filter(raw, head_pos, calibration, cross_talk):
     # Fine calibration file?
     # Crosstalk file?
     # Spatiotemporal or just spatial?
     # Detect bad channels, necessary to avoid noise spreading, ideally done manually
     raw = mark_bad_channels(raw)
     # Apply Maxwell filtering with head motion correction
-    raw = mne.preprocessing.maxwell_filter(raw, head_pos=head_pos)
+    raw = mne.preprocessing.maxwell_filter(raw, head_pos=head_pos, calibration=calibration, cross_talk=cross_talk)
     return raw
 
 def add_ecg_projectors(raw):
@@ -77,12 +77,15 @@ def compute_ica(raw):
 
 def remove_eog_ecg(ica, raw):
     eog_indices, eog_scores = ica.find_bads_eog(raw)
-    ecg_indices, ecg_scores = ica.find_bads_ecg(raw)
-    return eog_indices, ecg_indices
+    ecg_indices, ecg_scores = ica.find_bads_ecg(raw, method='correlation')  # Default method 'ctps' identified too many components as heartbeat artifacts
+    ica.exclude = eog_indices + ecg_indices
+    ica.apply(raw)
+    return raw
 
-def filter_data(raw):
+def filter_data(raw, l_freq=0.1, h_freq=100, line_freqs=(50,100)):
+    # l_freq and h_freq: bandpass filter
+    # line_freqs: power line artifatcs (default values are because data was recorded in UK)
     meg_picks = mne.pick_types(raw.info, meg=True)  #Only filter MEG channels
-    freqs = (50, 100)                               #50 Hz and its first harmonic (recorded in UK)
-    raw.notch_filter(freqs=freqs, picks=meg_picks)  #Use a notch filter to take out power line noise
-    raw.filter(l_freq=0.1, h_freq=100, picks=meg_picks) #Bandpass filter data (probably not any detectable high gamma activity in resting state because SNR is too low)
+    raw.notch_filter(freqs=line_freqs, picks=meg_picks)  #Use a notch filter to take out power line noise
+    raw.filter(l_freq=l_freq, h_freq=h_freq, picks=meg_picks) #Bandpass filter data (probably not any detectable high gamma activity in resting state because SNR is too low)
     return raw
