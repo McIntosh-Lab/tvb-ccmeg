@@ -11,6 +11,7 @@
 import mne              # Need MNE Python
 import preprocess       # Module with all the preprocessing functions
 import compute_source   # Module with functions to go from sensor space to source space
+import numpy as np      # Need for array operations
 
 # Identify calibration and cross-talk files (important for Maxwell filtering)
 calibration = '/home/sdobri/Software/CamCAN/tvb-ccmeg/tvb-ccmeg/sss_params/sss_cal.dat'
@@ -111,6 +112,25 @@ inverse_operator = compute_source.make_inverse_operator(raw, raw_fname, trans, s
 mne.minimum_norm.write_inverse_operator(output_dir + 'test_inv.fif', inverse_operator, overwrite=True)
 
 # Estimate source activity
-stc = compute_source.compute_inverse_solution(raw, inverse_operator)
+# Takes lots of memory so we should delete the objects we don't need
+del report, head_pos, ecg_epochs, ecg_before, ecg_after, eog_epochs, eog_before, eog_after, bem, noise_cov
+stc = compute_source.compute_inverse_solution_rest(raw, inverse_operator)
 # Write source activity to file
-stc.save(output_dir + 'stc_test', overwrite=True)
+for index, s in enumerate(stc):
+    s.save(output_dir + 'stc/' + 'stc_test_' + str(index), overwrite=True)
+
+# Estimate source activity in parcellated brain
+
+# Compute source space for fsaverage
+fsaverage_src = compute_source.setup_source_space('fsaverage', fs_dir)
+# Morph subject's source-space activity to fsaverage for parcellation
+morph = mne.compute_source_morph(src, subject_from=subject, subject_to='fsaverage', src_to=fsaverage_src, subjects_dir=fs_dir)
+stc_fsaverage = []
+for s in stc:
+    stc_fsaverage.append(morph.apply(s))
+
+# Read labels from parcellation file
+labels = mne.read_labels_from_annot('fsaverage', parc='Schaefer2018_200Parcels_17Networks_order', subjects_dir=fs_dir)
+# Extract timeseries for parcellation ('mean_flip' option reduces cancellation due to differing source orientations)
+parc_ts = mne.extract_label_time_course(stc_fsaverage, labels, src, mode='mean_flip')
+np.save(output_dir + 'parc_ts_test', parc_ts)

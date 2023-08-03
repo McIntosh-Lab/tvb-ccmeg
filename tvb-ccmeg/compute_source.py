@@ -13,7 +13,7 @@ import mne
 def setup_source_space(subject, subjects_dir):
     # Requires BEM surfaces to be computed in FreeSurfer directory
     # Could compute BEM surfaces in this module (done in MNE Python, not FreeSurfer)
-    src = mne.setup_source_space(subject, spacing='oct6', add_dist=False, subjects_dir=subjects_dir)
+    src = mne.setup_source_space(subject, spacing='oct6', surface='orig', add_dist=False, subjects_dir=subjects_dir)
     return src
 
 def make_bem(subject, subjects_dir):
@@ -31,12 +31,13 @@ def make_inverse_operator(raw, raw_fname, trans, src, bem, noise_cov):
     inverse_operator = mne.minimum_norm.make_inverse_operator(raw.info, fwd, noise_cov, loose=0.2, depth=0.8)
     return inverse_operator
 
-def compute_inverse_solution(raw, inverse_operator):
+def compute_inverse_solution_rest(raw, inverse_operator, tmin=30, tmax=60, epoch_length=10):
     method = "dSPM"
     snr = 1.0           # Lower SNR for resting state than evoked responses
     lambda2 = 1./snr**2
-    raw.resample(200)   # We aren't interested in anything above 100 Hz, so downsample to Nyquist frequency to save memory, speed up computation
     # Need to decide how much time we need: probably not the whole scan, and should be the same length of time for all participants
-    start, stop = raw.time_as_index([30, 60])   # Only do 30 seconds for now, my computer doesn't have enough memory to do more
-    stc = mne.minimum_norm.apply_inverse_raw(raw, inverse_operator, lambda2, method=method, start=start, stop=stop, pick_ori=None)
+    cropped_raw = raw.copy().crop(tmin=tmin, tmax=tmax)
+    # Divide into epochs to greatly speed up computation
+    epochs = mne.make_fixed_length_epochs(cropped_raw, duration=epoch_length)
+    stc = mne.minimum_norm.apply_inverse_epochs(epochs, inverse_operator, lambda2, method=method, pick_ori=None)
     return stc
