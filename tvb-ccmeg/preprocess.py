@@ -18,12 +18,12 @@ def read_data(fname):
     mne.channels.fix_mag_coil_types(raw.info)
     return raw
 
-def compute_noise_cov(er_fname, raw):
+def compute_noise_cov(er_fname, raw, calibration, cross_talk):
     # Important to apply the same preprocessing steps to empty room recording as subject recording
     er_raw = read_data(er_fname)
     er_raw.del_proj()
-    er_raw.info['bads'] = raw.info['bads']
-    er_raw = mne.preprocessing.maxwell_filter(er_raw,coord_frame='meg') # Does it matter that we use a different coordinate frame? We can't really do this if we apply Maxwell filtering with head movement correction. 
+    er_raw = mne.preprocessing.maxwell_filter_prepare_emptyroom(er_raw, raw=raw)
+    er_raw = mne.preprocessing.maxwell_filter(er_raw, calibration=calibration, cross_talk=cross_talk) 
     er_raw = filter_data(er_raw)
     er_raw.add_proj(raw.info['projs'])
     noise_cov = mne.compute_raw_covariance(er_raw, tmin=0, tmax=None)

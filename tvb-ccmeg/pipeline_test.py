@@ -90,7 +90,7 @@ raw.save(output_dir + 'test_preprocessed.fif', overwrite=True)
 report.save(output_dir + 'report.html', overwrite=True)
 
 # Calculate noise covariance from empty room data (need this for MNE)
-noise_cov = preprocess.compute_noise_cov(er_fname, raw)
+noise_cov = preprocess.compute_noise_cov(er_fname, raw, calibration, cross_talk)
 # Write noise covariance to file
 mne.write_cov(output_dir + 'er-cov.fif', noise_cov, overwrite=True)
 
@@ -121,16 +121,8 @@ for index, s in enumerate(stc):
 
 # Estimate source activity in parcellated brain
 
-# Compute source space for fsaverage
-fsaverage_src = compute_source.setup_source_space('fsaverage', fs_dir)
-# Morph subject's source-space activity to fsaverage for parcellation
-morph = mne.compute_source_morph(src, subject_from=subject, subject_to='fsaverage', src_to=fsaverage_src, subjects_dir=fs_dir)
-stc_fsaverage = []
-for s in stc:
-    stc_fsaverage.append(morph.apply(s))
-
 # Read labels from parcellation file
-labels = mne.read_labels_from_annot('fsaverage', parc='Schaefer2018_200Parcels_17Networks_order', subjects_dir=fs_dir)
+labels = mne.read_labels_from_annot(subject, parc='Schaefer2018_200Parcels_17Networks_order', subjects_dir=fs_dir)
 # Extract timeseries for parcellation ('mean_flip' option reduces cancellation due to differing source orientations)
-parc_ts = mne.extract_label_time_course(stc_fsaverage, labels, src, mode='mean_flip')
+parc_ts = mne.extract_label_time_course(stc, labels, src, mode='mean_flip')
 np.save(output_dir + 'parc_ts_test', parc_ts)
