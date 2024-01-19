@@ -31,13 +31,10 @@ def make_inverse_operator(raw, raw_fname, trans, src, bem, noise_cov):
     inverse_operator = mne.minimum_norm.make_inverse_operator(raw.info, fwd, noise_cov, loose=0.2, depth=0.8)
     return inverse_operator
 
-def compute_inverse_solution_rest(raw, inverse_operator, tmin=30, tmax=60, epoch_length=10):
+def compute_inverse_solution_rest(raw, inverse_operator, tmin=30, tmax=330):
     method = "dSPM"
     snr = 1.0           # Lower SNR for resting state than evoked responses
     lambda2 = 1./snr**2
-    # Need to decide how much time we need: probably not the whole scan, and should be the same length of time for all participants
-    cropped_raw = raw.copy().crop(tmin=tmin, tmax=tmax)
-    # Divide into epochs to greatly speed up computation
-    epochs = mne.make_fixed_length_epochs(cropped_raw, duration=epoch_length)
-    stc = mne.minimum_norm.apply_inverse_epochs(epochs, inverse_operator, lambda2, method=method, pick_ori=None)
+    start, stop = raw.time_as_index([tmin, tmax])   # Range of time where we compute source activity
+    stc = mne.minimum_norm.apply_inverse_raw(raw, inverse_operator, lambda2, start=start, stop=stop, method=method, pick_ori=None)
     return stc

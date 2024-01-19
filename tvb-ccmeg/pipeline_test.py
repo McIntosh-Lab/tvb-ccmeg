@@ -12,25 +12,44 @@ import mne              # Need MNE Python
 import preprocess       # Module with all the preprocessing functions
 import compute_source   # Module with functions to go from sensor space to source space
 import numpy as np      # Need for array operations
+import os
+import sys
+
+# Check if a subject is passed
+
+if len(sys.argv) <= 1:
+    raise ValueError("A subject directory has not been provided. Usage:"
+                     "\n\tpython pipeline_test.py <subject_directory_name>")
+else:
+    subject = sys.argv[1]
+
+# Set number of cores for parallel processing (must be done before running any linear algebra functions)
+num_cpu = '16'
+os.environ['OMP_NUM_THREADS'] = num_cpu
 
 # Identify calibration and cross-talk files (important for Maxwell filtering)
-calibration = '/home/sdobri/Software/CamCAN/tvb-ccmeg/tvb-ccmeg/sss_params/sss_cal.dat'
-cross_talk = '/home/sdobri/Software/CamCAN/tvb-ccmeg/tvb-ccmeg/sss_params/ct_sparse.fif'
+calibration = '/home/sdobri/tvb-ccmeg/tvb-ccmeg/sss_params/sss_cal.dat'
+cross_talk = '/home/sdobri/tvb-ccmeg/tvb-ccmeg/sss_params/ct_sparse.fif'
 
-# Identify the files to process (only one subject for now)
-raw_fname = '/home/sdobri/Documents/McLab/CamCAN/ccmeg/ccmeg_data/camCAN724/cc700/meg/pipeline/release005/BIDSsep/rest/sub-CC221954/ses-rest/meg/sub-CC221954_ses-rest_task-rest_meg.fif'
-er_fname = '/home/sdobri/Documents/McLab/CamCAN/ccmeg/ccmeg_data/camCAN724/cc700/meg/pipeline/release005/BIDSsep/emptyroom/sub-CC221954/emptyroom/emptyroom_CC221954.fif'
-trans = '/home/sdobri/Documents/McLab/CamCAN/ccmeg/ccmeg_data/camcan_derivatives/trans-halifax/sub-CC221954-trans.fif'
-subject = 'sub-CC221954'
-fs_dir = '/home/sdobri/Documents/McLab/CamCAN/ccmeg/ccmeg_data/camcan_derivatives/freesurfer/'
+# Identify the files to process
+rest_raw_dname = '/home/sdobri/Cam-CAN/test_data/meg/rest/'
+er_dname = '/home/sdobri/Cam-CAN/test_data/meg/empty_room/'
+trans_dname = '/home/sdobri/Cam-CAN/test_data/trans-halifax/'
+fs_dir = '/home/sdobri/Cam-CAN/test_data/mri/freesurfer/'
+subjlist = os.listdir(rest_raw_dname)
+raw_fname = rest_raw_dname + subject + '/ses-rest/meg/' + subject + '_ses-rest_task-rest_meg.fif'
+er_fname = er_dname + subject + '/emptyroom/emptyroom_' + subject[4:] + '.fif'
+trans = '/home/sdobri/Cam-CAN/test_data/meg/trans-halifax/' + subject + '-trans.fif'
 
 # We want to save output at various points in the pipeline
-output_dir = '/home/sdobri/Documents/McLab/CamCAN/pipeline_test_output/'
+output_dir = '/home/sdobri/Cam-CAN/pipeline_test_output/' + subject + '/'
+if not os.path.isdir(output_dir):
+	os.mkdir(output_dir)
 
-#Preprocessing:
+# Preprocessing:
 
-# Generate MNE Python report to visually inspect preprocessing steps
-report = mne.Report(title='Test Subj', raw_psd=True)
+# Generate MNE Python report for visual quality control
+report = mne.Report(title=subject+'_QC_report', raw_psd=True)
 
 # Read resting-state data
 raw = preprocess.read_data(raw_fname)
@@ -40,13 +59,12 @@ report.add_raw(raw=raw, title='Raw')
 
 # Compute head position throughout recording
 head_pos = preprocess.compute_head_position(raw)
-# Write head position to file (takes a while to compute)
-# Add visualization of head motion to report
+# Write head position to file (takes a while to compute) and add visualization to report
 mne.chpi.write_head_pos(output_dir + 'head_pos.pos', head_pos)
-report.add_figure(fig=mne.viz.plot_head_positions(head_pos, mode='traces', show=False),title='Head Motion')
+report.add_figure(fig=mne.viz.plot_head_positions(head_pos, mode='traces', show=False), title='Head Motion')
 
-# Apply Maxwell filtering with head motion correction
-raw = preprocess.maxwell_filter(raw, head_pos, calibration, cross_talk)
+# Apply Maxwell filtering without head motion correction
+raw = preprocess.maxwell_filter(raw, calibration, cross_talk)
 # Add Maxwell filtered PSD to report
 report.add_figure(fig=raw.compute_psd(fmax=350).plot(show=False), title='Maxwell Filtered')
 
@@ -96,7 +114,11 @@ mne.write_cov(output_dir + 'er-cov.fif', noise_cov, overwrite=True)
 
 # Estimate source activity
 
-# This section requires previously-computed boundary element model (BEM) surfaces to be in the FreeSurfer directory
+# Make boundary element model (BEM) surfaces if there isn't already a file
+if not os.path.isfile(fs_dir + '/' + subject + '/bem/watershed/' + subject + '-meg-bem.fif'):
+    mne.bem.make_watershed_bem(subject, subjects_dir=fs_dir, overwrite=True)
+
+# This section requires previously-computed BEM surfaces to be in the FreeSurfer directory
 # Setup source space
 src = compute_source.setup_source_space(subject, fs_dir)
 # Save source space
@@ -112,17 +134,19 @@ inverse_operator = compute_source.make_inverse_operator(raw, raw_fname, trans, s
 mne.minimum_norm.write_inverse_operator(output_dir + 'test_inv.fif', inverse_operator, overwrite=True)
 
 # Estimate source activity
-# Takes lots of memory so we should delete the objects we don't need
-del report, head_pos, ecg_epochs, ecg_before, ecg_after, eog_epochs, eog_before, eog_after, bem, noise_cov
+# First downsample to 300 Hz to avoid running out of memory when computing full source reconstruction
+raw.resample(300)
+
 stc = compute_source.compute_inverse_solution_rest(raw, inverse_operator)
-# Write source activity to file
-for index, s in enumerate(stc):
-    s.save(output_dir + 'stc/' + 'stc_test_' + str(index), overwrite=True)
+
+#   Write source activity to file
+stc.save(ouputput_dir + 'stc_test', overwrite=True)
 
 # Estimate source activity in parcellated brain
 
 # Read labels from parcellation file
 labels = mne.read_labels_from_annot(subject, parc='Schaefer2018_200Parcels_17Networks_order', subjects_dir=fs_dir)
-# Extract timeseries for parcellation ('mean_flip' option reduces cancellation due to differing source orientations)
-parc_ts = mne.extract_label_time_course(stc, labels, src, mode='mean_flip')
+# Extract timeseries for parcellation ('mean' option avoids cancellation from default 'mean_flip' since MNE source activity is not signed)
+parc_ts = mne.extract_label_time_course(stc, labels, src, mode='mean')
+# Save parcellated time series to file
 np.save(output_dir + 'parc_ts_test', parc_ts)

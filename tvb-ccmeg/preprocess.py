@@ -47,7 +47,7 @@ def compute_head_position(raw):
     return head_pos
 
 
-def maxwell_filter(raw, head_pos, calibration, cross_talk):
+def maxwell_filter(raw, calibration, cross_talk, head_pos=None):
     # Fine calibration file?
     # Crosstalk file?
     # Spatiotemporal or just spatial?
