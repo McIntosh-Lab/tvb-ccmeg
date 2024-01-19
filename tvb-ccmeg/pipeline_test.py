@@ -28,15 +28,14 @@ num_cpu = '16'
 os.environ['OMP_NUM_THREADS'] = num_cpu
 
 # Identify calibration and cross-talk files (important for Maxwell filtering)
-calibration = '/home/sdobri/tvb-ccmeg/tvb-ccmeg/sss_params/sss_cal.dat'
-cross_talk = '/home/sdobri/tvb-ccmeg/tvb-ccmeg/sss_params/ct_sparse.fif'
+calibration = '/home/sdobri/scratch/Cam-CAN/tvb-ccmeg/tvb-ccmeg/sss_params/sss_cal.dat'
+cross_talk = '/home/sdobri/scratch/Cam-CAN/tvb-ccmeg/tvb-ccmeg/sss_params/ct_sparse.fif'
 
 # Identify the files to process
-rest_raw_dname = '/home/sdobri/Cam-CAN/test_data/meg/rest/'
-er_dname = '/home/sdobri/Cam-CAN/test_data/meg/empty_room/'
-trans_dname = '/home/sdobri/Cam-CAN/test_data/trans-halifax/'
-fs_dir = '/home/sdobri/Cam-CAN/test_data/mri/freesurfer/'
-subjlist = os.listdir(rest_raw_dname)
+rest_raw_dname = '/home/sdobri/scratch/Cam-CAN/test_data/meg/rest/'
+er_dname = '/home/sdobri/scratch/Cam-CAN/test_data/meg/empty_room/'
+trans_dname = '/home/sdobri/scratch/Cam-CAN/test_data/trans-halifax/'
+fs_dir = '/home/sdobri/scratch/Cam-CAN/test_data/mri/freesurfer/'
 raw_fname = rest_raw_dname + subject + '/ses-rest/meg/' + subject + '_ses-rest_task-rest_meg.fif'
 er_fname = er_dname + subject + '/emptyroom/emptyroom_' + subject[4:] + '.fif'
 trans = '/home/sdobri/Cam-CAN/test_data/meg/trans-halifax/' + subject + '-trans.fif'
