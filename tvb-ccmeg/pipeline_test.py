@@ -32,10 +32,10 @@ calibration = '/home/sdobri/scratch/Cam-CAN/tvb-ccmeg/tvb-ccmeg/sss_params/sss_c
 cross_talk = '/home/sdobri/scratch/Cam-CAN/tvb-ccmeg/tvb-ccmeg/sss_params/ct_sparse.fif'
 
 # Identify the files to process
-rest_raw_dname = '/home/sdobri/scratch/Cam-CAN/test_data/meg/rest/'
-er_dname = '/home/sdobri/scratch/Cam-CAN/test_data/meg/empty_room/'
-trans_dname = '/home/sdobri/scratch/Cam-CAN/test_data/trans-halifax/'
-fs_dir = '/home/sdobri/scratch/Cam-CAN/test_data/mri/freesurfer/'
+rest_raw_dname = '/home/sdobri/projects/def-rmcintos/Cam-CAN/meg/release005/BIDSsep/rest/'
+er_dname = '/home/sdobri/projects/def-rmcintos/Cam-CAN/meg/release005/BIDSsep/meg_emptyroom/'
+trans_dname = '/home/sdobri/projects/def-rmcintos/Cam-CAN/meg/release005/BIDSsep/trans-halifax/'
+fs_dir = '/home/sdobri/scratch/Cam-CAN/freesurfer/'
 raw_fname = rest_raw_dname + subject + '/ses-rest/meg/' + subject + '_ses-rest_task-rest_meg.fif'
 er_fname = er_dname + subject + '/emptyroom/emptyroom_' + subject[4:] + '.fif'
 trans = '/home/sdobri/Cam-CAN/test_data/meg/trans-halifax/' + subject + '-trans.fif'
