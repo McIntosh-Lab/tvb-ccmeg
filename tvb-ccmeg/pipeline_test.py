@@ -38,10 +38,10 @@ trans_dname = '/home/sdobri/projects/def-rmcintos/Cam-CAN/meg/release005/BIDSsep
 fs_dir = '/home/sdobri/scratch/Cam-CAN/freesurfer/'
 raw_fname = rest_raw_dname + subject + '/ses-rest/meg/' + subject + '_ses-rest_task-rest_meg.fif'
 er_fname = er_dname + subject + '/emptyroom/emptyroom_' + subject[4:] + '.fif'
-trans = '/home/sdobri/Cam-CAN/test_data/meg/trans-halifax/' + subject + '-trans.fif'
+trans = trans_dname + subject + '-trans.fif'
 
 # We want to save output at various points in the pipeline
-output_dir = '/home/sdobri/Cam-CAN/pipeline_test_output/' + subject + '/'
+output_dir = '/home/sdobri/scratch/Cam-CAN/pipeline_test_output/' + subject + '/'
 if not os.path.isdir(output_dir):
 	os.mkdir(output_dir)
 
@@ -139,7 +139,7 @@ raw.resample(300)
 stc = compute_source.compute_inverse_solution_rest(raw, inverse_operator)
 
 #   Write source activity to file
-stc.save(ouputput_dir + 'stc_test', overwrite=True)
+# stc.save(output_dir + 'stc_test', overwrite=True)
 
 # Estimate source activity in parcellated brain
 
