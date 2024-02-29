@@ -8,16 +8,18 @@ import glob
 import library as lib
 
 import mne
-from mne.externals import h5io
-from joblib import Parallel, delayed
+# from mne.externals import h5io
+# from joblib import Parallel, delayed
 
-subjects = lib.utils.get_subjects(cfg.camcan_meg_raw_path)
+# subjects = lib.utils.get_subjects(cfg.camcan_meg_raw_path)
 
-subjects_dir = cfg.mne_camcan_freesurfer_path
-mne.utils.set_log_level('warning')
+
+
 
 
 def _make_conductivty_model(subject):
+    subjects_dir = cfg.mne_camcan_freesurfer_path
+    mne.utils.set_log_level('warning')
     error = "None"
     try:
         bem_surfs = mne.bem.make_bem_model(
@@ -28,6 +30,7 @@ def _make_conductivty_model(subject):
         mne.bem.write_bem_solution(
             op.join(subjects_dir, subject, 'bem', '%s-meg-bem.fif' % subject),
             conductivity_model)
+        print("MADE IT HERE")
     except Exception as ee:
         error = repr(ee)
     outputs = glob.glob(op.join(subjects_dir, subject, 'bem', '*meg-bem.fif'))
@@ -35,8 +38,9 @@ def _make_conductivty_model(subject):
     return out
 
 
-out = Parallel(n_jobs=44)(
-    delayed(_make_conductivty_model)(subject=subject)
-    for subject in subjects)
+# out = Parallel(n_jobs=44)(
+#     delayed(_make_conductivty_model)(subject=subject)
+#     for subject in subjects)
 
-h5io.write_hdf5('make_boundary_element_models.h5', out, overwrite=True)
+# h5io.write_hdf5('make_boundary_element_models.h5', out, overwrite=True)
+

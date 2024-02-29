@@ -4,7 +4,8 @@ import os.path as op
 #camcan_path = '/storage/store/data/camcan'
 #camcan_path = '/liberatrix/mcintosh_lab/camCAN724/cc700'
 #camcan_path = '/tolosa/mcintosh_lab/pjohnston/camcan_test/'
-camcan_path = '/project/def-rmcintos/pjohns/ccmeg/ccmeg_data/'
+# camcan_path = '/project/def-rmcintos/pjohns/ccmeg/ccmeg_data/'
+camcan_path = '/home/noahfl/data/cc_meg'
 
 #camcan_meg_path = op.join(
 #    camcan_path, 'camcan47/cc700/meg/pipeline/release004/')
