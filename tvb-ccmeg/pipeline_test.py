@@ -27,21 +27,24 @@ else:
 num_cpu = '16'
 os.environ['OMP_NUM_THREADS'] = num_cpu
 
+# Identify user's home directory
+home_dir = os.path.expanduser('~')
+
 # Identify calibration and cross-talk files (important for Maxwell filtering)
-calibration = '/home/sdobri/scratch/Cam-CAN/tvb-ccmeg/tvb-ccmeg/sss_params/sss_cal.dat'
-cross_talk = '/home/sdobri/scratch/Cam-CAN/tvb-ccmeg/tvb-ccmeg/sss_params/ct_sparse.fif'
+calibration = os.path.join(home_dir, 'projects/ctb-rmcintos/data-sets/Cam-CAN/tvb-ccmeg/tvb-ccmeg/sss_params/sss_cal.dat')
+cross_talk = os.path.join(home_dir, 'projects/ctb-rmcintos/data-sets/Cam-CAN/tvb-ccmeg/tvb-ccmeg/sss_params/ct_sparse.fif')
 
 # Identify the files to process
-rest_raw_dname = '/home/sdobri/projects/def-rmcintos/Cam-CAN/meg/release005/BIDSsep/rest/'
-er_dname = '/home/sdobri/projects/def-rmcintos/Cam-CAN/meg/release005/BIDSsep/meg_emptyroom/'
-trans_dname = '/home/sdobri/projects/def-rmcintos/Cam-CAN/meg/release005/BIDSsep/trans-halifax/'
-fs_dir = '/home/sdobri/scratch/Cam-CAN/freesurfer/'
-raw_fname = rest_raw_dname + subject + '/ses-rest/meg/' + subject + '_ses-rest_task-rest_meg.fif'
-er_fname = er_dname + subject + '/emptyroom/emptyroom_' + subject[4:] + '.fif'
-trans = trans_dname + subject + '-trans.fif'
+rest_raw_dname = os.path.join(home_dir, 'projects/def-rmcintos/Cam-CAN/meg/release005/BIDSsep/rest/')
+er_dname = os.path.join(home_dir, 'projects/def-rmcintos/Cam-CAN/meg/release005/BIDSsep/meg_emptyroom/')
+trans_dname = os.path.join(home_dir, 'projects/def-rmcintos/Cam-CAN/meg/release005/BIDSsep/trans-halifax/')
+fs_dir = os.path.join(home_dir, 'projects/ctb-rmcintos/data-sets/Cam-CAN/freesurfer/')
+raw_fname = os.path.join(rest_raw_dname, subject, 'ses-rest/meg', subject + '_ses-rest_task-rest_meg.fif')
+er_fname = os.path.join(er_dname, subject, 'emptyroom/emptyroom_' + subject[4:] + '.fif')
+trans = os.path.join(trans_dname, subject + '-trans.fif')
 
 # We want to save output at various points in the pipeline
-output_dir = '/home/sdobri/scratch/Cam-CAN/pipeline_test_output/' + subject + '/'
+output_dir = os.path.join(home_dir,'projects/ctb-rmcintos/data-sets/Cam-CAN/pipeline_test_output', subject)
 if not os.path.isdir(output_dir):
 	os.mkdir(output_dir)
 
@@ -59,7 +62,7 @@ report.add_raw(raw=raw, title='Raw')
 # Compute head position throughout recording
 head_pos = preprocess.compute_head_position(raw)
 # Write head position to file (takes a while to compute) and add visualization to report
-mne.chpi.write_head_pos(output_dir + 'head_pos.pos', head_pos)
+mne.chpi.write_head_pos(os.path.join(output_dir, 'head_pos.pos'), head_pos)
 report.add_figure(fig=mne.viz.plot_head_positions(head_pos, mode='traces', show=False), title='Head Motion')
 
 # Apply Maxwell filtering without head motion correction
@@ -101,36 +104,36 @@ eog_after = eog_after.average().apply_baseline(baseline=(None, -0.2))
 report.add_evokeds(evokeds=eog_after, titles='EOG After')
 
 # Save preprocessed MEG data
-raw.save(output_dir + 'test_preprocessed.fif', overwrite=True)
+raw.save(os.path.join(output_dir, 'test_preprocessed.fif'), overwrite=True)
 
 # Save report
-report.save(output_dir + 'report.html', overwrite=True)
+report.save(os.path.join(output_dir, 'report.html'), overwrite=True)
 
 # Calculate noise covariance from empty room data (need this for MNE)
 noise_cov = preprocess.compute_noise_cov(er_fname, raw, calibration, cross_talk)
 # Write noise covariance to file
-mne.write_cov(output_dir + 'er-cov.fif', noise_cov, overwrite=True)
+mne.write_cov(os.path.join(output_dir, 'er-cov.fif'), noise_cov, overwrite=True)
 
 # Estimate source activity
 
 # Make boundary element model (BEM) surfaces if there isn't already a file
-if not os.path.isfile(fs_dir + '/' + subject + '/bem/watershed/' + subject + '-meg-bem.fif'):
+if not os.path.isfile(os.path.join(fs_dir, subject, 'bem/watershed', subject + '-meg-bem.fif')):
     mne.bem.make_watershed_bem(subject, subjects_dir=fs_dir, overwrite=True)
 
 # This section requires previously-computed BEM surfaces to be in the FreeSurfer directory
 # Setup source space
 src = compute_source.setup_source_space(subject, fs_dir)
 # Save source space
-mne.write_source_spaces(output_dir + 'test_src.fif', src, overwrite=True)
+mne.write_source_spaces(os.path.join(output_dir, 'test_src.fif'), src, overwrite=True)
 # Make boundary element model (BEM)
 bem = compute_source.make_bem(subject, fs_dir)
 # Save BEM
-mne.write_bem_solution(output_dir + 'test_bem.h5', bem, overwrite=True)
+mne.write_bem_solution(os.path.join(output_dir, 'test_bem.h5'), bem, overwrite=True)
 
 # Make inverse operator to go from sensor to source space
 inverse_operator = compute_source.make_inverse_operator(raw, raw_fname, trans, src, bem, noise_cov)
 # Save inverse operator
-mne.minimum_norm.write_inverse_operator(output_dir + 'test_inv.fif', inverse_operator, overwrite=True)
+mne.minimum_norm.write_inverse_operator(os.path.join(output_dir, 'test_inv.fif'), inverse_operator, overwrite=True)
 
 # Estimate source activity
 # First downsample to 300 Hz to avoid running out of memory when computing full source reconstruction
@@ -139,7 +142,7 @@ raw.resample(300)
 stc = compute_source.compute_inverse_solution_rest(raw, inverse_operator)
 
 #   Write source activity to file
-# stc.save(output_dir + 'stc_test', overwrite=True)
+# stc.save(os.pathn.join(output_dir, 'stc_test'), overwrite=True)
 
 # Estimate source activity in parcellated brain
 
@@ -148,4 +151,4 @@ labels = mne.read_labels_from_annot(subject, parc='Schaefer2018_200Parcels_17Net
 # Extract timeseries for parcellation ('mean' option avoids cancellation from default 'mean_flip' since MNE source activity is not signed)
 parc_ts = mne.extract_label_time_course(stc, labels, src, mode='mean')
 # Save parcellated time series to file
-np.save(output_dir + 'parc_ts_test', parc_ts)
+np.save(os.path.join(output_dir, 'parc_ts_test'), parc_ts)

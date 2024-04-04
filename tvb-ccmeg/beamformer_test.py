@@ -28,20 +28,20 @@ num_cpu = '16'
 os.environ['OMP_NUM_THREADS'] = num_cpu
 
 # Identify calibration and cross-talk files (important for Maxwell filtering)
-calibration = '/home/sdobri/scratch/Cam-CAN/tvb-ccmeg/tvb-ccmeg/sss_params/sss_cal.dat'
-cross_talk = '/home/sdobri/scratch/Cam-CAN/tvb-ccmeg/tvb-ccmeg/sss_params/ct_sparse.fif'
+calibration = '/home/sdobri/projects/ctb-rmcintos/data-sets/Cam-CAN/tvb-ccmeg/tvb-ccmeg/sss_params/sss_cal.dat'
+cross_talk = '/home/sdobri/projects/ctb-rmcintos/data-sets/Cam-CAN/tvb-ccmeg/tvb-ccmeg/sss_params/ct_sparse.fif'
 
 # Identify the files to process
 rest_raw_dname = '/home/sdobri/projects/def-rmcintos/Cam-CAN/meg/release005/BIDSsep/rest/'
 er_dname = '/home/sdobri/projects/def-rmcintos/Cam-CAN/meg/release005/BIDSsep/meg_emptyroom/'
 trans_dname = '/home/sdobri/projects/def-rmcintos/Cam-CAN/meg/release005/BIDSsep/trans-halifax/'
-fs_dir = '/home/sdobri/scratch/Cam-CAN/freesurfer/'
+fs_dir = '/home/sdobri/projects/ctb-rmcintos/data-sets/Cam-CAN/freesurfer/'
 raw_fname = rest_raw_dname + subject + '/ses-rest/meg/' + subject + '_ses-rest_task-rest_meg.fif'
 er_fname = er_dname + subject + '/emptyroom/emptyroom_' + subject[4:] + '.fif'
 trans = trans_dname + subject + '-trans.fif'
 
 # We want to save output at various points in the pipeline
-output_dir = '/home/sdobri/scratch/Cam-CAN/pipeline_test_output/' + subject + '/'
+output_dir = '/home/sdobri/projects/ctb-rmcintos/data-sets/Cam-CAN/pipeline_test_output/' + subject + '/'
 if not os.path.isdir(output_dir):
 	os.mkdir(output_dir)
 
@@ -51,14 +51,14 @@ raw.del_proj()                          # Don't want existing projectors, could 
 raw.pick(['grad', 'eog', 'ecg'])                      # Discard magnetometer data, it's too noisy
 
 # Filter data to remove line noise, slow drifts, and frequencies too high to be of interest
-raw = preprocess.filter_data(raw)
+raw = preprocess.filter_data(raw,l_freq=1.0,h_freq=90)
 
 # Remove heartbeat and eye movement artifacts
 raw = preprocess.add_ecg_projectors(raw)
 raw = preprocess.add_eog_projectors(raw)
 
 # Downsample raw data to speed up computation
-new_sfreq = 300
+new_sfreq = 512
 raw.resample(new_sfreq)
 
 # Compute data covariance from two minutes of raw recording
