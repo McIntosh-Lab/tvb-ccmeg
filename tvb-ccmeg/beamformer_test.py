@@ -51,7 +51,9 @@ raw.del_proj()                          # Don't want existing projectors, could 
 raw.pick(['grad', 'eog', 'ecg'])                      # Discard magnetometer data, it's too noisy
 
 # Filter data to remove line noise, slow drifts, and frequencies too high to be of interest
-raw = preprocess.filter_data(raw,l_freq=1.0,h_freq=90)
+l_freq = 1.0    # High pass frequency in Hz
+h_freq = 90     # Low pass frequency in Hz
+raw = preprocess.filter_data(raw,l_freq=l_freq,h_freq=h_freq)
 
 # Remove heartbeat and eye movement artifacts
 raw = preprocess.add_ecg_projectors(raw)
@@ -68,7 +70,7 @@ data_cov = mne.compute_raw_covariance(raw, tmin=30, tmax=150)
 er_raw = preprocess.read_data(er_fname)
 er_raw.del_proj()
 er_raw.pick(['grad'])
-er_raw = preprocess.filter_data(er_raw)
+er_raw = preprocess.filter_data(er_raw,l_freq=l_freq,h_freq=h_freq)
 er_raw.add_proj(raw.info['projs'])
 er_raw.apply_proj()
 er_raw.resample(new_sfreq)
