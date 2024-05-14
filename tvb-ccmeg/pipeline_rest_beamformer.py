@@ -41,7 +41,7 @@ er_fname = er_dname + subject + '/emptyroom/emptyroom_' + subject[4:] + '.fif'
 trans = trans_dname + subject + '-trans.fif'
 
 # We want to save output at various points in the pipeline
-output_dir = '/home/sdobri/projects/ctb-rmcintos/data-sets/Cam-CAN/meg_processed/' + subject + '/'
+output_dir = '/home/sdobri/projects/ctb-rmcintos/data-sets/Cam-CAN/processed_meg/' + subject + '/'
 if not os.path.isdir(output_dir):
 	os.mkdir(output_dir)
 

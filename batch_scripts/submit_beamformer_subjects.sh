@@ -79,7 +79,7 @@ source $EBROOTFREESURFER/FreeSurferEnv.sh
 
 # Rest of your script
 
-SUBMIT_SUBJECT_SCRIPT_PATH="$HOME/projects/ctb-rmcintos/datasets/Cam-CAN/batch_scripts/submit_beamformer_subject.sh"
+SUBMIT_SUBJECT_SCRIPT_PATH="$HOME/projects/ctb-rmcintos/data-sets/Cam-CAN/tvb-ccmeg/batch_scripts/submit_beamformer_subject.sh"
 
 # Check if a file name is provided as an argument
 if [ $# -ne 3 ]; then
