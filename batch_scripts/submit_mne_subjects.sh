@@ -20,7 +20,7 @@
 #			line.
 #
 # Usage:
-# 	./submit_subjects.sh <pipeline_environment.sif> <pipeline_repository> <subject_list.txt>
+# 	./submit_mne_subjects.sh <pipeline_environment.sif> <pipeline_repository> <subject_list.txt>
 #
 # --------------------------------------------------------------------------- #
 # Subject Directory Structure
@@ -79,7 +79,7 @@ source $EBROOTFREESURFER/FreeSurferEnv.sh
 
 # Rest of your script
 
-SUBMIT_SUBJECT_SCRIPT_PATH="$HOME/projects/ctb-rmcintos/data-sets/Cam-CAN/batch_scripts/submit_subject.sh"
+SUBMIT_SUBJECT_SCRIPT_PATH="$HOME/projects/ctb-rmcintos/data-sets/Cam-CAN/batch_scripts/submit_mne_subject.sh"
 
 # Check if a file name is provided as an argument
 if [ $# -ne 3 ]; then
