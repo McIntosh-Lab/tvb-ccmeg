@@ -44,7 +44,7 @@ er_fname = os.path.join(er_dname, subject, 'emptyroom/emptyroom_' + subject[4:] 
 trans = os.path.join(trans_dname, subject + '-trans.fif')
 
 # We want to save output at various points in the pipeline
-output_dir = os.path.join(home_dir,'projects/ctb-rmcintos/data-sets/Cam-CAN/pipeline_test_output', subject)
+output_dir = os.path.join(home_dir,'projects/ctb-rmcintos/data-sets/Cam-CAN/processed_meg', subject)
 if not os.path.isdir(output_dir):
 	os.mkdir(output_dir)
 
