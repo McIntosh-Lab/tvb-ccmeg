@@ -9,6 +9,8 @@
 # License: BSD (3-clause)
 
 import mne              # Need MNE Python
+#import nibabel		# Need this for legacy mne on cedar
+import sklearn		# Need this for the fastica option in artifact rejection
 import preprocess       # Module with all the preprocessing functions
 import compute_source   # Module with functions to go from sensor space to source space
 import numpy as np      # Need for array operations
@@ -28,25 +30,26 @@ num_cpu = '16'
 os.environ['OMP_NUM_THREADS'] = num_cpu
 
 # Identify calibration and cross-talk files (important for Maxwell filtering)
-calibration = '/home/sdobri/projects/ctb-rmcintos/data-sets/Cam-CAN/tvb-ccmeg/tvb-ccmeg/sss_params/sss_cal.dat'
-cross_talk = '/home/sdobri/projects/ctb-rmcintos/data-sets/Cam-CAN/tvb-ccmeg/tvb-ccmeg/sss_params/ct_sparse.fif'
+calibration = '/home/jsolomon/scratch/cam-Can/tvb-ccmeg/tvb-ccmeg/sss_params/sss_cal.dat'
+cross_talk = '/home/jsolomon/scratch/cam-Can/tvb-ccmeg/tvb-ccmeg/sss_params/ct_sparse.fif'
 
 # Identify the files to process
-rest_raw_dname = '/home/sdobri/projects/def-rmcintos/Cam-CAN/meg/release005/BIDSsep/rest/'
-er_dname = '/home/sdobri/projects/def-rmcintos/Cam-CAN/meg/release005/BIDSsep/meg_emptyroom/'
-trans_dname = '/home/sdobri/projects/def-rmcintos/Cam-CAN/meg/release005/BIDSsep/trans-halifax/'
-fs_dir = '/home/sdobri/projects/ctb-rmcintos/data-sets/Cam-CAN/freesurfer/'
-raw_fname = rest_raw_dname + subject + '/ses-rest/meg/' + subject + '_ses-rest_task-rest_meg.fif'
+rest_raw_dname = '/home/jsolomon/projects/rpp-doesburg/databases/camcan872/cc700/meg/pipeline/release005/BIDSsep/derivatives_rest/aa/AA_nomovecomp/aamod_meg_maxfilt_00001/'
+er_dname = '/home/jsolomon/projects/rpp-doesburg/databases/camcan872/cc700/meg/pipeline/release004/BIDS_20190411/meg_emptyroom/'
+trans_dname = '/home/jsolomon/projects/rpp-doesburg/databases/camcan_coreg/trans/'
+fs_dir = '/home/jsolomon/scratch/cam-Can/freesurfer/'
+raw_fname = rest_raw_dname + subject + '/mf2pt2_' + subject + '_ses-rest_task-rest_meg.fif'
 er_fname = er_dname + subject + '/emptyroom/emptyroom_' + subject[4:] + '.fif'
 trans = trans_dname + subject + '-trans.fif'
 
 # We want to save output at various points in the pipeline
-output_dir = '/home/sdobri/projects/ctb-rmcintos/data-sets/Cam-CAN/processed_meg/' + subject + '/'
+output_dir = './processed_meg/' + subject + '/'
 if not os.path.isdir(output_dir):
 	os.mkdir(output_dir)
 
 # Read resting-state data
 raw = preprocess.read_data(raw_fname)
+raw.crop(tmin=30, tmax=390)
 raw.del_proj()                          # Don't want existing projectors, could add to preprocess.read_data() if we never want them
 raw.pick(['grad', 'eog', 'ecg'])                      # Discard magnetometer data, it's too noisy
 
@@ -56,11 +59,10 @@ h_freq = 90     # Low pass frequency in Hz
 raw = preprocess.filter_data(raw,l_freq=l_freq,h_freq=h_freq)
 
 # Remove heartbeat and eye movement artifacts
-raw = preprocess.add_ecg_projectors(raw)
-raw = preprocess.add_eog_projectors(raw)
+raw = preprocess.do_ICA(raw)
 
 # Downsample raw data to speed up computation
-new_sfreq = 512
+new_sfreq = 500
 raw.resample(new_sfreq)
 
 # Compute data covariance from two minutes of raw recording
@@ -71,14 +73,13 @@ er_raw = preprocess.read_data(er_fname)
 er_raw.del_proj()
 er_raw.pick(['grad'])
 er_raw = preprocess.filter_data(er_raw,l_freq=l_freq,h_freq=h_freq)
-er_raw.add_proj(raw.info['projs'])
-er_raw.apply_proj()
+er_raw = preprocess.do_ICA(er_raw)
 er_raw.resample(new_sfreq)
 noise_cov = mne.compute_raw_covariance(er_raw)
 
 # Make boundary element model (BEM) surfaces if there isn't already a file
-if not os.path.isfile(fs_dir + '/' + subject + '/bem/watershed/' + subject + '-meg-bem.fif'):
-    mne.bem.make_watershed_bem(subject, subjects_dir=fs_dir, overwrite=True)
+#if not os.path.isfile(fs_dir + '/' + subject + '/bem/watershed/' + subject + '-meg-bem.fif'):
+#    mne.bem.make_watershed_bem(subject, subjects_dir=fs_dir, overwrite=True)
 
 # This section requires previously-computed BEM surfaces to be in the FreeSurfer directory
 
