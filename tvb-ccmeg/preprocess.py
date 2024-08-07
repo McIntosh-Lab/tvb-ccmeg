@@ -121,5 +121,5 @@ def do_ICA(raw, picks, reject = dict(mag=5e-12, grad=4000e-13), random_state = 2
     ica = remove_EOG_artifact(raw, ica, reject = reject)
     ica = remove_ECG_artifact(raw, ica)
     ica.apply(raw)
-    return raw
+    return raw, ica
 

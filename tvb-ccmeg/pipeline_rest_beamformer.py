@@ -60,7 +60,7 @@ raw = preprocess.filter_data(raw,l_freq=l_freq,h_freq=h_freq)
 
 # Remove heartbeat and eye movement artifacts
 pick_meg = mne.pick_types(raw.info, meg=True, eeg=False, stim=False, ref_meg=False)
-raw = preprocess.do_ICA(raw, picks=pick_meg)
+raw, ica = preprocess.do_ICA(raw, picks=pick_meg)
 
 # Downsample raw data to speed up computation
 new_sfreq = 500
@@ -74,7 +74,7 @@ er_raw = preprocess.read_data(er_fname)
 er_raw.del_proj()
 er_raw.pick(['meg'])	# I realize that this doesn' make sense
 er_raw = preprocess.filter_data(er_raw,l_freq=l_freq,h_freq=h_freq)
-er_raw = preprocess.do_ICA(er_raw, picks=pick_meg) # This is of course spitting an error as there are no EOG or ECG channels
+ica.apply(er_raw)
 er_raw.resample(new_sfreq)
 noise_cov = mne.compute_raw_covariance(er_raw)
 
