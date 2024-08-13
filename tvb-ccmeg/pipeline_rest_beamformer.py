@@ -9,7 +9,7 @@
 # License: BSD (3-clause)
 
 import mne              # Need MNE Python
-#import nibabel		# Need this for legacy mne on cedar
+import nibabel		# Need this for legacy mne on cedar
 import sklearn		# Need this for the fastica option in artifact rejection
 import picard		# Need this for the picard option in artifact rejection
 import preprocess       # Module with all the preprocessing functions
@@ -80,8 +80,8 @@ er_raw.resample(new_sfreq)
 noise_cov = mne.compute_raw_covariance(er_raw)
 
 # Make boundary element model (BEM) surfaces if there isn't already a file
-#if not os.path.isfile(fs_dir + '/' + subject + '/bem/watershed/' + subject + '-meg-bem.fif'):
-#    mne.bem.make_watershed_bem(subject, subjects_dir=fs_dir, overwrite=True)
+if not os.path.isfile(fs_dir + '/' + subject + '/bem/watershed/' + subject + '-meg-bem.fif'):
+    mne.bem.make_watershed_bem(subject, subjects_dir=fs_dir, overwrite=True)
 
 # This section requires previously-computed BEM surfaces to be in the FreeSurfer directory
 
