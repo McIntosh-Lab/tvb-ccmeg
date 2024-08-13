@@ -116,8 +116,8 @@ def remove_ECG_artifact(raw, ica, method='ctps', tmin=-.5, tmax=.5):
         print("No ECG events found\n")
     return ica
 
-def do_ICA(raw, picks, reject = dict(mag=5e-12, grad=4000e-13), random_state = 23):
-    ica = fit_ICA(raw, picks=picks, method = "fastica", reject = reject, random_state = random_state)
+def do_ICA(raw, picks, method = "picard", reject = dict(mag=5e-12, grad=4000e-13), random_state = 23):
+    ica = fit_ICA(raw, picks=picks, method = method, reject = reject, random_state = random_state)
     ica = remove_EOG_artifact(raw, ica, reject = reject)
     ica = remove_ECG_artifact(raw, ica)
     ica.apply(raw)

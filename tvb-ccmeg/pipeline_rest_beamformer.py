@@ -11,6 +11,7 @@
 import mne              # Need MNE Python
 #import nibabel		# Need this for legacy mne on cedar
 import sklearn		# Need this for the fastica option in artifact rejection
+import picard		# Need this for the picard option in artifact rejection
 import preprocess       # Module with all the preprocessing functions
 import compute_source   # Module with functions to go from sensor space to source space
 import numpy as np      # Need for array operations
@@ -60,7 +61,7 @@ raw = preprocess.filter_data(raw,l_freq=l_freq,h_freq=h_freq)
 
 # Remove heartbeat and eye movement artifacts
 pick_meg = mne.pick_types(raw.info, meg=True, eeg=False, stim=False, ref_meg=False)
-raw, ica = preprocess.do_ICA(raw, picks=pick_meg)
+raw, ica = preprocess.do_ICA(raw, picks=pick_meg, method = "picard")
 
 # Downsample raw data to speed up computation
 new_sfreq = 500
