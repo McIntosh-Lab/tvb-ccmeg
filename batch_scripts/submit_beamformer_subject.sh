@@ -2,7 +2,7 @@
 #SBATCH --output=./logs/proc_out/job_output_%j.txt
 #SBATCH --error=./logs/proc_err/job_error_%j.txt
 #SBATCH --ntasks=1
-#SBATCH --time=01:00:00
+#SBATCH --time=02:00:00
 #SBATCH --mem=64000M
 #SBATCH --account=rrg-rmcintos
 

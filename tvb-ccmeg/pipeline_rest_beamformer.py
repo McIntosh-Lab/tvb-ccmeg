@@ -67,6 +67,12 @@ raw, ica = preprocess.do_ICA(raw, picks=pick_meg, method = "picard")
 new_sfreq = 500
 raw.resample(new_sfreq)
 
+# Calculate PSD
+n_fft=256
+raw_psd,freqs = raw.compute_psd(method='welch',fmin=0, fmax=h_freq, n_fft = n_fft).get_data(return_freqs=True)
+np.save(output_dir + 'sensor_PSD', raw_psd)
+np.save(output_dir + 'PSD_freq', freqs)
+
 # Compute data covariance from two minutes of raw recording
 data_cov = mne.compute_raw_covariance(raw, tmin=30, tmax=150)
 
@@ -114,3 +120,8 @@ np.save(output_dir + 'parc_ts_beamformer_bh', parc_ts_bh)
 labels_aparc = fs_dir+subject+'/mri/aparc+aseg.mgz'
 parc_ts_aparc = mne.extract_label_time_course(stc, labels_aparc, src, mode='auto')
 np.save(output_dir + 'parc_ts_beamformer_aparc', parc_ts_aparc)
+
+# Calculate Source PSD
+parc_ts_aparc_PSD, source_PSD_freq = mne.time_frequency.psd_array_welch(parc_ts_aparc,fmin = 0, fmax = h_freq, sfreq = new_sfreq, n_fft = n_fft)
+np.save(output_dir + 'parc_ts_beamformer_aparc_PSD', parc_ts_aparc_PSD)
+np.save(output_dir + 'source_PSD_freq', source_PSD_freq)

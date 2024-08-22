@@ -79,7 +79,7 @@ module load freesurfer
 source $EBROOTFREESURFER/FreeSurferEnv.sh
 
 # Souce venv
-source $HOME/camcan_mse/bin/activate
+source $HOME/newmne/bin/activate
 
 # Rest of your script
 
