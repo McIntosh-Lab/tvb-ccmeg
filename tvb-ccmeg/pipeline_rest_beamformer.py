@@ -76,10 +76,14 @@ np.save(output_dir + 'PSD_freq', freqs)
 # Compute data covariance from two minutes of raw recording
 data_cov = mne.compute_raw_covariance(raw, tmin=30, tmax=150)
 
+# I tried only using the grads
+# data_cov = mne.compute_raw_covariance(raw, picks = mne.pick_types(raw.info, meg='grad', eeg=False, stim=False, ref_meg=False))
+# raw.pick('grad')
+
 # Compute noise covariance from empty room recording
 er_raw = preprocess.read_data(er_fname)
 er_raw.del_proj()
-er_raw.pick(['meg'])	# I realize that this doesn' make sense
+er_raw.pick(['meg'])	# I realize that this doesn' make sense but I need the mags for the ICA
 er_raw = preprocess.filter_data(er_raw,l_freq=l_freq,h_freq=h_freq)
 ica.apply(er_raw)
 er_raw.resample(new_sfreq)
@@ -99,7 +103,7 @@ src.save(output_dir + 'src_beamformer-src.fif', overwrite=True)
 
 # Compute the spatial filter
 filts = mne.beamformer.make_lcmv(raw.info, fwd, data_cov, reg=0.05, noise_cov=noise_cov, pick_ori='max-power', weight_norm='unit-noise-gain', rank='info')
-
+# filts = mne.beamformer.make_lcmv(raw.info, fwd, data_cov, reg=0.05, noise_cov=None, pick_ori=None,weight_norm=None, depth=None, rank=None) #Vasily's settings
 # Apply beamformer
 start, stop = raw.time_as_index([30, 330])
 stc = mne.beamformer.apply_lcmv_raw(raw, filts, start=start, stop=stop)
