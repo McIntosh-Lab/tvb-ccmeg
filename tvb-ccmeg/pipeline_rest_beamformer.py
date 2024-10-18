@@ -32,16 +32,16 @@ calibration = '/home/sdobri/projects/ctb-rmcintos/data-sets/Cam-CAN/tvb-ccmeg/tv
 cross_talk = '/home/sdobri/projects/ctb-rmcintos/data-sets/Cam-CAN/tvb-ccmeg/tvb-ccmeg/sss_params/ct_sparse.fif'
 
 # Identify the files to process
-rest_raw_dname = '/home/sdobri/projects/def-rmcintos/Cam-CAN/meg/release005/BIDSsep/rest/'
-er_dname = '/home/sdobri/projects/def-rmcintos/Cam-CAN/meg/release005/BIDSsep/meg_emptyroom/'
-trans_dname = '/home/sdobri/projects/def-rmcintos/Cam-CAN/meg/release005/BIDSsep/trans-halifax/'
+rest_raw_dname = '/home/sdobri/projects/rpp-doesburg/databases/camcan872/cc700/meg/pipeline/release005/BIDSsep/derivatives_rest/aa/AA_nomovecomp/aamod_meg_maxfilt_00001/'
+er_dname = '/home/sdobri/projects/rpp-doesburg/databases/camcan872/cc700/meg/pipeline/release004/BIDS_20190411/meg_emptyroom/'
+trans_dname = '/home/sdobri/projects/rpp-doesburg/databases/camcan_coreg/trans/'
 fs_dir = '/home/sdobri/projects/ctb-rmcintos/data-sets/Cam-CAN/freesurfer/'
-raw_fname = rest_raw_dname + subject + '/ses-rest/meg/' + subject + '_ses-rest_task-rest_meg.fif'
+raw_fname = rest_raw_dname + subject + '/mf2pt2_' + subject + '_ses-rest_task-rest_meg.fif'
 er_fname = er_dname + subject + '/emptyroom/emptyroom_' + subject[4:] + '.fif'
 trans = trans_dname + subject + '-trans.fif'
 
 # We want to save output at various points in the pipeline
-output_dir = '/home/sdobri/projects/ctb-rmcintos/data-sets/Cam-CAN/processed_meg/' + subject + '/'
+output_dir = '/home/sdobri/scratch/Cam-CAN/pipeline_test_output/' + subject + '/'
 if not os.path.isdir(output_dir):
 	os.mkdir(output_dir)
 
@@ -56,25 +56,27 @@ h_freq = 90     # Low pass frequency in Hz
 raw = preprocess.filter_data(raw,l_freq=l_freq,h_freq=h_freq)
 
 # Remove heartbeat and eye movement artifacts
-raw = preprocess.add_ecg_projectors(raw)
-raw = preprocess.add_eog_projectors(raw)
+#raw = preprocess.add_ecg_projectors(raw)
+#raw = preprocess.add_eog_projectors(raw)
+ica = preprocess.compute_ica(raw)
+raw = preprocess.remove_eog_ecg(ica, raw)
 
 # Downsample raw data to speed up computation
-new_sfreq = 512
+new_sfreq = 500
 raw.resample(new_sfreq)
 
 # Compute data covariance from two minutes of raw recording
 data_cov = mne.compute_raw_covariance(raw, tmin=30, tmax=150)
 
 # Compute noise covariance from empty room recording
-er_raw = preprocess.read_data(er_fname)
-er_raw.del_proj()
-er_raw.pick(['grad'])
-er_raw = preprocess.filter_data(er_raw,l_freq=l_freq,h_freq=h_freq)
-er_raw.add_proj(raw.info['projs'])
-er_raw.apply_proj()
-er_raw.resample(new_sfreq)
-noise_cov = mne.compute_raw_covariance(er_raw)
+#er_raw = preprocess.read_data(er_fname)
+#er_raw.del_proj()
+#er_raw.pick(['grad'])
+#er_raw = preprocess.filter_data(er_raw,l_freq=l_freq,h_freq=h_freq)
+#er_raw.add_proj(raw.info['projs'])
+#er_raw.apply_proj()
+#er_raw.resample(new_sfreq)
+#noise_cov = mne.compute_raw_covariance(er_raw)
 
 # Make boundary element model (BEM) surfaces if there isn't already a file
 if not os.path.isfile(fs_dir + '/' + subject + '/bem/watershed/' + subject + '-meg-bem.fif'):
@@ -84,30 +86,25 @@ if not os.path.isfile(fs_dir + '/' + subject + '/bem/watershed/' + subject + '-m
 
 # Set up forward solution
 bem = compute_source.make_bem(subject, fs_dir)
-src = mne.setup_volume_source_space(subject=subject, subjects_dir=fs_dir, bem=bem)
+#src = mne.setup_volume_source_space(subject=subject, subjects_dir=fs_dir, bem=bem)
+src = mne.setup_source_space(subject, subjects_dir=fs_dir)
 fwd = mne.make_forward_solution(raw.info, trans=trans, src=src, bem=bem, meg=True, eeg=False, mindist=5.0, n_jobs=None)
-src.save(output_dir + 'src_beamformer-src.fif', overwrite=True)
+#src.save(output_dir + 'src_beamformer-src.fif', overwrite=True)
 
 # Compute the spatial filter
-filts = mne.beamformer.make_lcmv(raw.info, fwd, data_cov, reg=0.05, noise_cov=noise_cov, pick_ori='max-power', weight_norm='unit-noise-gain', rank='info')
+filts = mne.beamformer.make_lcmv(raw.info, fwd, data_cov, reg=0.05, noise_cov=None, pick_ori='max-power', weight_norm='unit-noise-gain', rank='info')
 
 # Apply beamformer
 start, stop = raw.time_as_index([30, 330])
 stc = mne.beamformer.apply_lcmv_raw(raw, filts, start=start, stop=stop)
 #stc.save(output_dir + 'stc_beamformer', overwrite=True)
 
-# Extract timeseries for parcellated brain regions
-labels_lh = fs_dir+subject+'/label/lh.Schaefer2018_200Parcels_17Networks_order.mgz'
-labels_rh = fs_dir+subject+'/label/rh.Schaefer2018_200Parcels_17Networks_order.mgz'
-labels_bh = fs_dir+subject+'/label/Schaefer2018_200Parcels_17Networks_order.mgz'
-parc_ts_lh = mne.extract_label_time_course(stc, labels_lh, src, mode='auto')
-parc_ts_rh = mne.extract_label_time_course(stc, labels_rh, src, mode='auto')
-parc_ts_bh = mne.extract_label_time_course(stc, labels_bh, src, mode='auto')
-np.save(output_dir + 'parc_ts_beamformer_lh', parc_ts_lh)
-np.save(output_dir + 'parc_ts_beamformer_rh', parc_ts_rh)
-np.save(output_dir + 'parc_ts_beamformer_bh', parc_ts_bh)
-
 # Extract timeseries for aparc parcellated brain regions
-labels_aparc = fs_dir+subject+'/mri/aparc+aseg.mgz'
-parc_ts_aparc = mne.extract_label_time_course(stc, labels_aparc, src, mode='auto')
-np.save(output_dir + 'parc_ts_beamformer_aparc', parc_ts_aparc)
+#labels_aparc = fs_dir+subject+'/mri/aparc+aseg.mgz'
+#parc_ts_aparc = mne.extract_label_time_course(stc, labels_aparc, src, mode='auto')
+
+# Read labels from parcellation file
+labels = mne.read_labels_from_annot(subject, parc='Schaefer2018_200Parcels_17Networks_order', subjects_dir=fs_dir)
+# Extract timeseries for parcellation ('mean' option avoids cancellation from default 'mean_flip' since MNE source activity is not signed)
+parc_ts = mne.extract_label_time_course(stc, labels, src, mode='mean_flip')
+np.save(output_dir + 'parc_ts_beamformer_Schaefer', parc_ts)
