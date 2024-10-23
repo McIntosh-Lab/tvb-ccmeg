@@ -60,7 +60,7 @@ raw = preprocess.add_ecg_projectors(raw)
 raw = preprocess.add_eog_projectors(raw)
 
 # Downsample raw data to speed up computation
-new_sfreq = 512
+new_sfreq = 500
 raw.resample(new_sfreq)
 
 # Compute data covariance from two minutes of raw recording
@@ -84,30 +84,25 @@ if not os.path.isfile(fs_dir + '/' + subject + '/bem/watershed/' + subject + '-m
 
 # Set up forward solution
 bem = compute_source.make_bem(subject, fs_dir)
-src = mne.setup_volume_source_space(subject=subject, subjects_dir=fs_dir, bem=bem)
+# src = mne.setup_volume_source_space(subject=subject, subjects_dir=fs_dir, bem=bem) # Volume source space
+src = mne.setup_source_space(subject, subjects_dir=fs_dir) # Surface mesh source space
 fwd = mne.make_forward_solution(raw.info, trans=trans, src=src, bem=bem, meg=True, eeg=False, mindist=5.0, n_jobs=None)
 src.save(output_dir + 'src_beamformer-src.fif', overwrite=True)
 
 # Compute the spatial filter
-filts = mne.beamformer.make_lcmv(raw.info, fwd, data_cov, reg=0.05, noise_cov=noise_cov, pick_ori='max-power', weight_norm='unit-noise-gain', rank='info')
+filts = mne.beamformer.make_lcmv(raw.info, fwd, data_cov, reg=0.05, noise_cov=None, pick_ori='max-power', weight_norm='unit-noise-gain', rank='info')
 
 # Apply beamformer
 start, stop = raw.time_as_index([30, 330])
 stc = mne.beamformer.apply_lcmv_raw(raw, filts, start=start, stop=stop)
-#stc.save(output_dir + 'stc_beamformer', overwrite=True)
+stc.save(output_dir + 'stc_beamformer', overwrite=True)
 
-# Extract timeseries for parcellated brain regions
-labels_lh = fs_dir+subject+'/label/lh.Schaefer2018_200Parcels_17Networks_order.mgz'
-labels_rh = fs_dir+subject+'/label/rh.Schaefer2018_200Parcels_17Networks_order.mgz'
-labels_bh = fs_dir+subject+'/label/Schaefer2018_200Parcels_17Networks_order.mgz'
-parc_ts_lh = mne.extract_label_time_course(stc, labels_lh, src, mode='auto')
-parc_ts_rh = mne.extract_label_time_course(stc, labels_rh, src, mode='auto')
-parc_ts_bh = mne.extract_label_time_course(stc, labels_bh, src, mode='auto')
-np.save(output_dir + 'parc_ts_beamformer_lh', parc_ts_lh)
-np.save(output_dir + 'parc_ts_beamformer_rh', parc_ts_rh)
-np.save(output_dir + 'parc_ts_beamformer_bh', parc_ts_bh)
+# Extract timeseries for aparc parcellated brain regions (volumetric)
+# labels_aparc = fs_dir+subject+'/mri/aparc+aseg.mgz' # Volumetric
+# parc_ts_aparc = mne.extract_label_time_course(stc, labels_aparc, src, mode='auto')
+# np.save(output_dir + 'parc_ts_beamformer_aparc', parc_ts_aparc)
 
-# Extract timeseries for aparc parcellated brain regions
-labels_aparc = fs_dir+subject+'/mri/aparc+aseg.mgz'
-parc_ts_aparc = mne.extract_label_time_course(stc, labels_aparc, src, mode='auto')
-np.save(output_dir + 'parc_ts_beamformer_aparc', parc_ts_aparc)
+# Extract timeseries for aparc parcellated brain regions (surface mesh)
+labels = mne.read_labels_from_annot(subject, parc='aparc', subjects_dir=fs_dir)
+parc_ts = mne.extract_label_time_course(stc, labels, src, mode='mean_flip')
+np.save(output_dir + 'parc_ts_beamformer_aparc', parc_ts)
