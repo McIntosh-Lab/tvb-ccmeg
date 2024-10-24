@@ -99,12 +99,13 @@ start, stop = raw.time_as_index([30, 330])
 stc = mne.beamformer.apply_lcmv_raw(raw, filts, start=start, stop=stop)
 #stc.save(output_dir + 'stc_beamformer', overwrite=True)
 
-# Extract timeseries for aparc parcellated brain regions
+# Extract timeseries for aparc parcellated brain regions (volumetric)
 #labels_aparc = fs_dir+subject+'/mri/aparc+aseg.mgz'
 #parc_ts_aparc = mne.extract_label_time_course(stc, labels_aparc, src, mode='auto')
 
 # Read labels from parcellation file
-labels = mne.read_labels_from_annot(subject, parc='Schaefer2018_200Parcels_17Networks_order', subjects_dir=fs_dir)
-# Extract timeseries for parcellation ('mean' option avoids cancellation from default 'mean_flip' since MNE source activity is not signed)
+labels = mne.read_labels_from_annot(subject, parc='aparc', subjects_dir=fs_dir)
+#labels = mne.read_labels_from_annot(subject, parc='Schaefer2018_200Parcels_17Networks_order', subjects_dir=fs_dir)
+# Extract timeseries for parcellation
 parc_ts = mne.extract_label_time_course(stc, labels, src, mode='mean_flip')
-np.save(output_dir + 'parc_ts_beamformer_Schaefer', parc_ts)
+np.save(output_dir + 'parc_ts_beamformer_aparc', parc_ts)
