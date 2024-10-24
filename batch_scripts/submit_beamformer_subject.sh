@@ -43,4 +43,5 @@ source $FREESURFER_HOME/SetUpFreeSurfer.sh
 
 echo "Running pipeline..."
 echo "Pipeline Environment:	$PIPELINE_ENVIRONMENT"
+module load apptainer
 singularity exec --bind $FREESURFER_HOME:$FREESURFER_HOME --bind /home:/home --bind /project:/project --bind /scratch:/scratch --bind /localscratch:/localscratch "$PIPELINE_ENVIRONMENT" ./batch_scripts/run_pipeline_rest_beamformer.sh
