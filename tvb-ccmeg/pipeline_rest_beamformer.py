@@ -102,7 +102,20 @@ stc.save(output_dir + 'stc_beamformer', overwrite=True)
 # parc_ts_aparc = mne.extract_label_time_course(stc, labels_aparc, src, mode='auto')
 # np.save(output_dir + 'parc_ts_beamformer_aparc', parc_ts_aparc)
 
-# Extract timeseries for aparc parcellated brain regions (surface mesh)
-labels = mne.read_labels_from_annot(subject, parc='aparc', subjects_dir=fs_dir)
-parc_ts = mne.extract_label_time_course(stc, labels, src, mode='mean_flip')
-np.save(output_dir + 'parc_ts_beamformer_aparc', parc_ts)
+# Read labels from parcellation files and save to text files
+# Aparc (FreeSurfer default)
+labels_aparc = mne.read_labels_from_annot(subject, parc='aparc', subjects_dir=fs_dir)
+with open(os.path.join(output_dir, 'aparc_labels.txt'),'w') as outfile:
+    outfile.write('\n'.join(str(lab.name) for lab in labels_aparc))
+# Schaefer
+labels_schaefer = mne.read_labels_from_annot(subject, parc='Schaefer2018_200Parcels_17Networks_order', subjects_dir=fs_dir)
+with open(os.path.join(output_dir, 'Schaefer_labels.txt'),'w') as outfile:
+    outfile.write('\n'.join(str(lab.name) for lab in labels_schaefer))
+
+# Extract timeseries for parcellations (surface mesh)
+# Aparc
+aparc_ts = mne.extract_label_time_course(stc, labels_aparc, src, mode='mean_flip')
+np.save(output_dir + 'parc_ts_beamformer_aparc', aparc_ts)
+# Schaefer
+schaefer_ts = mne.extract_label_time_course(stc, labels_schaefer, src, mode='mean_flip')
+np.save(output_dir + 'parc_ts_beamformer_Schaefer', schaefer_ts)
