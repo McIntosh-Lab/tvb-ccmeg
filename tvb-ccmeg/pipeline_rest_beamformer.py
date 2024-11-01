@@ -104,12 +104,12 @@ else:
 	er_raw.pick(['grad'])
 
 er_raw = preprocess.filter_data(er_raw,l_freq=l_freq,h_freq=h_freq)
-
 if ICA:
 	ica.apply(er_raw)
 else:
 	er_raw.add_proj(raw.info['projs'])
 	er_raw.apply_proj()
+
 er_raw.resample(new_sfreq)
 if ICA:
 	er_raw.pick(['grad'])
@@ -128,6 +128,7 @@ if Vol:
 	src = mne.setup_volume_source_space(subject=subject, subjects_dir=fs_dir, bem=bem)
 else:
 	src = mne.setup_source_space(subject, subjects_dir=fs_dir) 
+
 fwd = mne.make_forward_solution(raw.info, trans=trans, src=src, bem=bem, meg=True, eeg=False, mindist=5.0, n_jobs=None)
 src.save(output_dir + 'src_beamformer-src.fif', overwrite=True)
 
