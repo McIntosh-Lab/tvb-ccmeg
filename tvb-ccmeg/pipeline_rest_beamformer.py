@@ -90,7 +90,7 @@ np.save(output_dir + 'PSD_freq', freqs)
 
 # Compute data covariance from two minutes of raw recording
 if ICA:
-	raw.picks('grad')
+	raw.pick('grad')
 	data_cov = mne.compute_raw_covariance(raw, tmin=30, tmax=150)
 else:
 	data_cov = mne.compute_raw_covariance(raw, tmin=30, tmax=150)
