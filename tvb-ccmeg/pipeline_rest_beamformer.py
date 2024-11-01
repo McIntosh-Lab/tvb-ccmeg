@@ -102,7 +102,9 @@ if ICA:
 	er_raw.pick(['meg'])	# I realize that this doesn' make sense but I need the mags for the ICA
 else:
 	er_raw.pick(['grad'])
+
 er_raw = preprocess.filter_data(er_raw,l_freq=l_freq,h_freq=h_freq)
+
 if ICA:
 	ica.apply(er_raw)
 else:
