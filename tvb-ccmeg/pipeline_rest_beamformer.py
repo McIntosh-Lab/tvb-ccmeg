@@ -91,9 +91,8 @@ np.save(output_dir + 'PSD_freq', freqs)
 # Compute data covariance from two minutes of raw recording
 if ICA:
 	raw.pick('grad')
-	data_cov = mne.compute_raw_covariance(raw, tmin=30, tmax=150)
-else:
-	data_cov = mne.compute_raw_covariance(raw, tmin=30, tmax=150)
+
+data_cov = mne.compute_raw_covariance(raw, tmin=30, tmax=150)
 
 # Compute noise covariance from empty room recording
 er_raw = preprocess.read_data(er_fname)
@@ -113,9 +112,8 @@ else:
 er_raw.resample(new_sfreq)
 if ICA:
 	er_raw.pick(['grad'])
-	noise_cov = mne.compute_raw_covariance(er_raw)
-else:
-	noise_cov = mne.compute_raw_covariance(er_raw)
+
+noise_cov = mne.compute_raw_covariance(er_raw)
 
 # Make boundary element model (BEM) surfaces if there isn't already a file
 if not os.path.isfile(fs_dir + '/' + subject + '/bem/watershed/' + subject + '-meg-bem.fif'):
