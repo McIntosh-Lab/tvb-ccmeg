@@ -27,21 +27,30 @@ else:
 num_cpu = '16'
 os.environ['OMP_NUM_THREADS'] = num_cpu
 
+# Get paths to files
+pardir = os.path.abspath('..')  # Parent directory
+
 # Identify calibration and cross-talk files (important for Maxwell filtering)
-calibration = '/home/sdobri/projects/ctb-rmcintos/data-sets/Cam-CAN/tvb-ccmeg/tvb-ccmeg/sss_params/sss_cal.dat'
-cross_talk = '/home/sdobri/projects/ctb-rmcintos/data-sets/Cam-CAN/tvb-ccmeg/tvb-ccmeg/sss_params/ct_sparse.fif'
+calibration = os.path.join(os.path.abspath('.'), 'tvb-ccmeg/sss_params/sss_cal.dat')
+cross_talk = os.path.join(os.path.abspath('.'), 'tvb-ccmeg/sss_params/ct_sparse.fif')
 
 # Identify the files to process
-rest_raw_dname = '/home/sdobri/projects/def-rmcintos/Cam-CAN/meg/release005/BIDSsep/rest/'
-er_dname = '/home/sdobri/projects/def-rmcintos/Cam-CAN/meg/release005/BIDSsep/meg_emptyroom/'
-trans_dname = '/home/sdobri/projects/def-rmcintos/Cam-CAN/meg/release005/BIDSsep/trans-halifax/'
-fs_dir = '/home/sdobri/projects/ctb-rmcintos/data-sets/Cam-CAN/freesurfer/'
-raw_fname = rest_raw_dname + subject + '/ses-rest/meg/' + subject + '_ses-rest_task-rest_meg.fif'
-er_fname = er_dname + subject + '/emptyroom/emptyroom_' + subject[4:] + '.fif'
-trans = trans_dname + subject + '-trans.fif'
+# Raw data should be in a directory called 'meg' with the same parent directory as the pipeline code
+pardir_meg = os.path.abspath('../meg/release005/BIDSsep')  # Directory containing MEG data
+rest_raw_dname = os.path.join(pardir_meg, 'rest')
+er_dname = os.path.join(pardir_meg, 'meg_emptyroom')
+trans_dname = os.path.join(pardir_meg, 'trans-halifax')
+raw_fname = os.path.join(rest_raw_dname, subject, 'ses-rest/meg', subject + '_ses-rest_task-rest_meg.fif')
+er_fname = os.path.join(er_dname, subject, 'emptyroom/emptyroom_' + subject[4:] + '.fif')
+trans = os.path.join(trans_dname, subject + '-trans.fif')
+# FreeSurfer outputs should be in a directory called 'freesurfer' with same parent directory as the pipeline code
+fs_dir = os.path.abspath('../freesurfer')
 
 # We want to save output at various points in the pipeline
-output_dir = '/home/sdobri/projects/ctb-rmcintos/data-sets/Cam-CAN/processed_meg/' + subject + '/'
+processed_dir = os.abspath('../processed_meg')
+if not os.path.isdir(processed_dir):
+    os.mkdir(processed_dir)
+output_dir = os.path.join(processed_dir, subject)
 if not os.path.isdir(output_dir):
 	os.mkdir(output_dir)
 
