@@ -9,14 +9,12 @@
 # License: BSD (3-clause)
 
 import mne              # Need MNE Python
-import nibabel		# Need this for legacy mne on cedar
-import sklearn		# Need this for the fastica option in artifact rejection
-import picard		# Need this for the picard option in artifact rejection
 import preprocess       # Module with all the preprocessing functions
 import compute_source   # Module with functions to go from sensor space to source space
 import numpy as np      # Need for array operations
 import os
 import sys
+# IF the MNE wheel on cedar is used, then sklearn, nibabel and python-picard also need to be imported
 
 # Check if a subject is passed
 
@@ -82,11 +80,9 @@ else:
 new_sfreq = 500
 raw.resample(new_sfreq)
 
-# Calculate PSD
-n_fft=256
-raw_psd,freqs = raw.compute_psd(method='welch',fmin=0, fmax=h_freq, n_fft = n_fft).get_data(return_freqs=True)
-np.save(output_dir + 'sensor_PSD', raw_psd)
-np.save(output_dir + 'PSD_freq', freqs)
+# Save processed Raw data
+
+raw.save(output_dir + 'sensor_processed_meg.fif', overwrite=True)
 
 # Compute data covariance from two minutes of raw recording
 if ICA:
@@ -138,27 +134,3 @@ filts = mne.beamformer.make_lcmv(raw.info, fwd, data_cov, reg=0.05, noise_cov=No
 start, stop = raw.time_as_index([30, 390])
 stc = mne.beamformer.apply_lcmv_raw(raw, filts, start=start, stop=stop)
 stc.save(output_dir + 'stc_beamformer', overwrite=True)
-
-# Extract timeseries for aparc parcellated brain regions
-if Vol:
-	labels_aparc = fs_dir+subject+'/mri/aparc+aseg.mgz'
-	parc_ts_aparc = mne.extract_label_time_course(stc, labels_aparc, src, mode='pca_flip')
-	np.save(output_dir + 'parc_ts_beamformer_aparc', parc_ts_aparc)
-else:
-	# Aparc
-	labels_aparc = mne.read_labels_from_annot(subject, parc='aparc', subjects_dir=fs_dir)
-	with open(os.path.join(output_dir, 'aparc_labels.txt'),'w') as outfile:
-		outfile.write('\n'.join(str(lab.name) for lab in labels_aparc))
-	aparc_ts = mne.extract_label_time_course(stc, labels_aparc, src, mode='pca_flip')
-	np.save(output_dir + 'parc_ts_beamformer_aparc', aparc_ts)
-	# Schaefer
-	labels_schaefer = mne.read_labels_from_annot(subject, parc='Schaefer2018_200Parcels_17Networks_order', subjects_dir=fs_dir)
-	with open(os.path.join(output_dir, 'Schaefer_labels.txt'),'w') as outfile:
-		outfile.write('\n'.join(str(lab.name) for lab in labels_schaefer))
-	schaefer_ts = mne.extract_label_time_course(stc, labels_schaefer, src, mode='pca_flip')
-	np.save(output_dir + 'parc_ts_beamformer_Schaefer', schaefer_ts)
-
-# Calculate Source PSD
-parc_ts_aparc_PSD, source_PSD_freq = mne.time_frequency.psd_array_welch(parc_ts_aparc,fmin = 0, fmax = h_freq, sfreq = new_sfreq, n_fft = n_fft)
-np.save(output_dir + 'parc_ts_beamformer_aparc_PSD', parc_ts_aparc_PSD)
-np.save(output_dir + 'source_PSD_freq', source_PSD_freq)
