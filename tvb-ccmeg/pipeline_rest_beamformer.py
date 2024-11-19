@@ -35,7 +35,6 @@ pardir = os.path.abspath('..')  # Parent directory
 calibration = os.path.join(os.path.abspath('.'), 'tvb-ccmeg/sss_params/sss_cal.dat')
 cross_talk = os.path.join(os.path.abspath('.'), 'tvb-ccmeg/sss_params/ct_sparse.fif')
 
-
 # Identify the files to process
 # Raw data should be in a directory called 'meg' with the same parent directory as the pipeline code
 pardir_meg = os.path.abspath('../meg/release005/BIDSsep')  # Directory containing MEG data
