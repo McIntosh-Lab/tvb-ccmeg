@@ -103,3 +103,4 @@ while IFS= read -r subject_name; do
     # Submit a Slurm job for each line
     sbatch -J $PIPELINE_REPO_$subject_name $SUBMIT_SUBJECT_SCRIPT_PATH $PIPELINE_ENVIRONMENT $PIPELINE_REPO $subject_name
 done < "$SUBJECT_LIST"
+
