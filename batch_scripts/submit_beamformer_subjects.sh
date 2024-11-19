@@ -73,11 +73,6 @@
 
 #!/bin/bash
 
-# Sourcing freesurfer
-module load StdEnv/2020
-module load freesurfer
-source $EBROOTFREESURFER/FreeSurferEnv.sh
-
 # Souce venv
 source $HOME/newmne/bin/activate
 
