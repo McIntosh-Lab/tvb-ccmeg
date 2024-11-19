@@ -73,21 +73,23 @@
 
 #!/bin/bash
 
-# Souce venv
-source $HOME/newmne/bin/activate
+# Sourcing freesurfer
+module load freesurfer
+source $EBROOTFREESURFER/FreeSurferEnv.sh
 
 # Rest of your script
 
-SUBMIT_SUBJECT_SCRIPT_PATH="$HOME/scratch/cam-Can/tvb-ccmeg/batch_scripts/submit_beamformer_subject.sh"
+SUBMIT_SUBJECT_SCRIPT_PATH="$HOME/projects/ctb-rmcintos/data-sets/Cam-CAN/tvb-ccmeg/batch_scripts/submit_beamformer_subject.sh"
 
 # Check if a file name is provided as an argument
-if [ $# -ne 2 ]; then
-    echo "Usage: $0 <pipeline_repository> <subject_list.txt>"
+if [ $# -ne 3 ]; then
+    echo "Usage: $0 <pipeline_environment.sif> <pipeline_repository> <subject_list.txt>"
     exit 1
 fi
 
-PIPELINE_REPO=$1
-SUBJECT_LIST=$2
+PIPELINE_ENVIRONMENT=$1
+PIPELINE_REPO=$2
+SUBJECT_LIST=$3
 
 
 # Check if the file exists
@@ -99,6 +101,5 @@ fi
 # Iterate over each line in the file
 while IFS= read -r subject_name; do
     # Submit a Slurm job for each line
-    sbatch -J $PIPELINE_REPO_$subject_name $SUBMIT_SUBJECT_SCRIPT_PATH $PIPELINE_REPO $subject_name
+    sbatch -J $PIPELINE_REPO_$subject_name $SUBMIT_SUBJECT_SCRIPT_PATH $PIPELINE_ENVIRONMENT $PIPELINE_REPO $subject_name
 done < "$SUBJECT_LIST"
-
