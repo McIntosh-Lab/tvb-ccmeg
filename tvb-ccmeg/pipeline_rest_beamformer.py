@@ -127,6 +127,7 @@ if not os.path.isfile(fs_dir + '/' + subject + '/bem/watershed/' + subject + '-m
 # This section requires previously-computed BEM surfaces to be in the FreeSurfer directory
 # Set up forward solution
 bem = compute_source.make_bem(subject, fs_dir)
+
 if Vol:
 	src = mne.setup_volume_source_space(subject=subject, subjects_dir=fs_dir, bem=bem)
 else:
@@ -137,6 +138,7 @@ src.save(output_dir + 'src_beamformer-src.fif', overwrite=True)
 
 # Compute the spatial filter
 filts = mne.beamformer.make_lcmv(raw.info, fwd, data_cov, reg=0.05, noise_cov=None, pick_ori='max-power', weight_norm='unit-noise-gain', rank='info')
+
 # pick_ori=None, weight_norm=None, depth=None, rank=None) #Vasily's settings
 
 # Apply beamformer
