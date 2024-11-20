@@ -69,12 +69,6 @@ def add_eog_projectors(raw):
     raw.apply_proj()
     return raw
 
-def compute_ica(raw):
-    filt_raw = raw.copy().filter(l_freq=1.0, h_freq=None)   #Filter slow drift
-    ica = mne.preprocessing.ICA(n_components=15, max_iter='auto')
-    ica.fit(filt_raw)
-    return ica
-
 def remove_eog_ecg(ica, raw):
     eog_indices, eog_scores = ica.find_bads_eog(raw)
     ecg_indices, ecg_scores = ica.find_bads_ecg(raw, method='correlation')  # Default method 'ctps' identified too many components as heartbeat artifacts
@@ -89,3 +83,43 @@ def filter_data(raw, l_freq=0.1, h_freq=100, line_freqs=(50,100)):
     raw.notch_filter(freqs=line_freqs, picks=meg_picks)  #Use a notch filter to take out power line noise
     raw.filter(l_freq=l_freq, h_freq=h_freq, picks=meg_picks) #Bandpass filter data (probably not any detectable high gamma activity in resting state because SNR is too low)
     return raw
+
+def fit_ICA(raw, reject, random_state, picks, method = "picard", n_components = 40):
+    ica = mne.preprocessing.ICA(n_components=40, method=method, random_state=random_state)
+    try:
+        ica.fit(raw, picks=picks, reject=reject)
+    except:
+        print("ICA could not run. Large environmental artifacts.\n")
+    return ica
+
+def remove_EOG_artifact(raw, ica, reject):
+    eog_epochs = mne.preprocessing.create_eog_epochs(raw, reject=reject)
+    if eog_epochs.events.size != 0:
+        eog_inds, scores = ica.find_bads_eog(eog_epochs)
+        if len(eog_inds) != 0:
+            ica.exclude.extend(eog_inds)
+        else:
+            print("No ICA component correlated with EOG\n")
+    else:
+        print("No EOG events found\n")
+    return ica
+
+def remove_ECG_artifact(raw, ica, method='ctps', tmin=-.5, tmax=.5):
+    ecg_epochs = mne.preprocessing.create_ecg_epochs(raw, tmin=tmin, tmax=tmax)
+    if ecg_epochs.events.size != 0:
+        ecg_inds, scores = ica.find_bads_ecg(ecg_epochs, method=method)
+        if len(ecg_inds) != 0:
+            ica.exclude.extend(ecg_inds)
+        else:
+            print("No ICA component correlated with ECG\n")
+    else:
+        print("No ECG events found\n")
+    return ica
+
+def do_ICA(raw, picks, method = "picard", reject = dict(mag=5e-12, grad=4000e-13), random_state = 23):
+    ica = fit_ICA(raw, picks=picks, method = method, reject = reject, random_state = random_state)
+    ica = remove_EOG_artifact(raw, ica, reject = reject)
+    ica = remove_ECG_artifact(raw, ica)
+    ica.apply(raw)
+    return raw, ica
+

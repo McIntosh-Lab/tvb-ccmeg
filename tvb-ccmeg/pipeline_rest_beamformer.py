@@ -14,6 +14,7 @@ import compute_source   # Module with functions to go from sensor space to sourc
 import numpy as np      # Need for array operations
 import os
 import sys
+# IF the MNE wheel on cedar is used, then sklearn, nibabel and python-picard also need to be imported
 
 # Check if a subject is passed
 
@@ -54,10 +55,22 @@ output_dir = os.path.join(processed_dir, subject)
 if not os.path.isdir(output_dir):
 	os.mkdir(output_dir)
 
+# Set ECG / EOG correction method (options are ICA and SSP, the default is ICA)
+
+ICA = True
+
+# Pick either volumetric or surface mesh beamformers (default is volumetric)
+
+Vol = True
+
 # Read resting-state data
 raw = preprocess.read_data(raw_fname)
+raw.crop(tmin=30, tmax=390)
 raw.del_proj()                          # Don't want existing projectors, could add to preprocess.read_data() if we never want them
-raw.pick(['grad', 'eog', 'ecg'])                      # Discard magnetometer data, it's too noisy
+if ICA:
+	raw.pick(['meg', 'eog', 'ecg'])
+else:
+	raw.pick(['grad', 'eog', 'ecg'])
 
 # Filter data to remove line noise, slow drifts, and frequencies too high to be of interest
 l_freq = 1.0    # High pass frequency in Hz
@@ -65,24 +78,46 @@ h_freq = 90     # Low pass frequency in Hz
 raw = preprocess.filter_data(raw,l_freq=l_freq,h_freq=h_freq)
 
 # Remove heartbeat and eye movement artifacts
-raw = preprocess.add_ecg_projectors(raw)
-raw = preprocess.add_eog_projectors(raw)
+if ICA:
+	pick_meg = mne.pick_types(raw.info, meg=True, eeg=False, stim=False, ref_meg=False)
+	raw, ica = preprocess.do_ICA(raw, picks=pick_meg, method = "picard")
+else:
+	raw = preprocess.add_ecg_projectors(raw)
+	raw = preprocess.add_eog_projectors(raw)
 
 # Downsample raw data to speed up computation
 new_sfreq = 500
 raw.resample(new_sfreq)
 
+# Save processed Raw data
+
+raw.save(output_dir + 'sensor_processed_meg.fif', overwrite=True)
+
 # Compute data covariance from two minutes of raw recording
+if ICA:
+	raw.pick('grad')
+
 data_cov = mne.compute_raw_covariance(raw, tmin=30, tmax=150)
 
 # Compute noise covariance from empty room recording
 er_raw = preprocess.read_data(er_fname)
 er_raw.del_proj()
-er_raw.pick(['grad'])
+if ICA:
+	er_raw.pick(['meg'])	# I realize that this doesn' make sense but I need the mags for the ICA
+else:
+	er_raw.pick(['grad'])
+
 er_raw = preprocess.filter_data(er_raw,l_freq=l_freq,h_freq=h_freq)
-er_raw.add_proj(raw.info['projs'])
-er_raw.apply_proj()
+if ICA:
+	ica.apply(er_raw)
+else:
+	er_raw.add_proj(raw.info['projs'])
+	er_raw.apply_proj()
+
 er_raw.resample(new_sfreq)
+if ICA:
+	er_raw.pick(['grad'])
+
 noise_cov = mne.compute_raw_covariance(er_raw)
 
 # Make boundary element model (BEM) surfaces if there isn't already a file
@@ -90,19 +125,24 @@ if not os.path.isfile(fs_dir + '/' + subject + '/bem/watershed/' + subject + '-m
     mne.bem.make_watershed_bem(subject, subjects_dir=fs_dir, overwrite=True)
 
 # This section requires previously-computed BEM surfaces to be in the FreeSurfer directory
-
 # Set up forward solution
 bem = compute_source.make_bem(subject, fs_dir)
-# src = mne.setup_volume_source_space(subject=subject, subjects_dir=fs_dir, bem=bem) # Volume source space
-src = mne.setup_source_space(subject, subjects_dir=fs_dir) # Surface mesh source space
+
+if Vol:
+	src = mne.setup_volume_source_space(subject=subject, subjects_dir=fs_dir, bem=bem)
+else:
+	src = mne.setup_source_space(subject, subjects_dir=fs_dir) 
+
 fwd = mne.make_forward_solution(raw.info, trans=trans, src=src, bem=bem, meg=True, eeg=False, mindist=5.0, n_jobs=None)
 src.save(output_dir + 'src_beamformer-src.fif', overwrite=True)
 
 # Compute the spatial filter
 filts = mne.beamformer.make_lcmv(raw.info, fwd, data_cov, reg=0.05, noise_cov=None, pick_ori='max-power', weight_norm='unit-noise-gain', rank='info')
 
+# pick_ori=None, weight_norm=None, depth=None, rank=None) #Vasily's settings
+
 # Apply beamformer
-start, stop = raw.time_as_index([30, 330])
+start, stop = raw.time_as_index([30, 390])
 stc = mne.beamformer.apply_lcmv_raw(raw, filts, start=start, stop=stop)
 stc.save(output_dir + 'stc_beamformer', overwrite=True)
 
