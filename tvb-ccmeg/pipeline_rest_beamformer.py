@@ -20,7 +20,7 @@ import sys
 
 if len(sys.argv) <= 1:
     raise ValueError("A subject directory has not been provided. Usage:"
-                     "\n\tpython beamformer_test.py <subject_name>")
+                     "\n\tpython pipeline_rest_beamformer.py <subject_name>")
 else:
     subject = sys.argv[1]
 
@@ -28,20 +28,17 @@ else:
 num_cpu = '16'
 os.environ['OMP_NUM_THREADS'] = num_cpu
 
-# Get paths to files
-pardir = os.path.abspath('..')  # Parent directory
-
 # Identify calibration and cross-talk files (important for Maxwell filtering)
 calibration = os.path.join(os.path.abspath('.'), 'tvb-ccmeg/sss_params/sss_cal.dat')
 cross_talk = os.path.join(os.path.abspath('.'), 'tvb-ccmeg/sss_params/ct_sparse.fif')
 
 # Identify the files to process
 # Raw data should be in a directory called 'meg' with the same parent directory as the pipeline code
-pardir_meg = os.path.abspath('../meg/release005/BIDSsep')  # Directory containing MEG data
-rest_raw_dname = os.path.join(pardir_meg, 'rest')
-er_dname = os.path.join(pardir_meg, 'meg_emptyroom')
-trans_dname = os.path.join(pardir_meg, 'trans-halifax')
-raw_fname = os.path.join(rest_raw_dname, subject, 'ses-rest/meg', subject + '_ses-rest_task-rest_meg.fif')
+pardir_meg = os.path.abspath('../meg')  # Directory containing MEG data
+rest_raw_dname = os.path.join(pardir_meg, 'release005/BIDSsep/derivatives_rest/aa/AA_nomovecomp/aamod_meg_maxfilt_00001')
+er_dname = os.path.join(pardir_meg, 'release004/BIDS_20190411/meg_emptyroom/')
+trans_dname = os.path.join(pardir_meg, 'camcan_coreg/trans')
+raw_fname = os.path.join(rest_raw_dname, subject, '/mf2pt2_' + subject + '_ses-rest_task-rest_meg.fif')
 er_fname = os.path.join(er_dname, subject, 'emptyroom/emptyroom_' + subject[4:] + '.fif')
 trans = os.path.join(trans_dname, subject + '-trans.fif')
 # FreeSurfer outputs should be in a directory called 'freesurfer' with same parent directory as the pipeline code
@@ -57,11 +54,11 @@ if not os.path.isdir(output_dir):
 
 # Set ECG / EOG correction method (options are ICA and SSP, the default is ICA)
 
-ICA = True
+ICA = False
 
 # Pick either volumetric or surface mesh beamformers (default is volumetric)
 
-Vol = True
+Vol = False
 
 # Read resting-state data
 raw = preprocess.read_data(raw_fname)
