@@ -131,7 +131,7 @@ else:
 	src = mne.setup_source_space(subject, subjects_dir=fs_dir) 
 
 fwd = mne.make_forward_solution(raw.info, trans=trans, src=src, bem=bem, meg=True, eeg=False, mindist=5.0, n_jobs=None)
-src.save(output_dir + 'src_beamformer-src.fif', overwrite=True)
+src.save(os.path.join(output_dir, 'src_beamformer-src.fif'), overwrite=True)
 
 # Compute the spatial filter
 filts = mne.beamformer.make_lcmv(raw.info, fwd, data_cov, reg=0.05, noise_cov=None, pick_ori='max-power', weight_norm='unit-noise-gain', rank='info')
@@ -141,7 +141,7 @@ filts = mne.beamformer.make_lcmv(raw.info, fwd, data_cov, reg=0.05, noise_cov=No
 # Apply beamformer
 start, stop = raw.time_as_index([30, 390])
 stc = mne.beamformer.apply_lcmv_raw(raw, filts, start=start, stop=stop)
-stc.save(output_dir + 'stc_beamformer', overwrite=True)
+stc.save(os.path.join(output_dir, 'stc_beamformer'), overwrite=True)
 
 # Extract timeseries for aparc parcellated brain regions (volumetric)
 # labels_aparc = fs_dir+subject+'/mri/aparc+aseg.mgz' # Volumetric
@@ -161,7 +161,7 @@ with open(os.path.join(output_dir, 'Schaefer_labels.txt'),'w') as outfile:
 # Extract timeseries for parcellations (surface mesh)
 # Aparc
 aparc_ts = mne.extract_label_time_course(stc, labels_aparc, src, mode='mean_flip')
-np.save(output_dir + 'parc_ts_beamformer_aparc', aparc_ts)
+np.save(os.path.join(output_dir, 'parc_ts_beamformer_aparc'), aparc_ts)
 # Schaefer
 schaefer_ts = mne.extract_label_time_course(stc, labels_schaefer, src, mode='mean_flip')
-np.save(output_dir + 'parc_ts_beamformer_Schaefer', schaefer_ts)
+np.save(os.path.join(output_dir, 'parc_ts_beamformer_Schaefer'), schaefer_ts)
