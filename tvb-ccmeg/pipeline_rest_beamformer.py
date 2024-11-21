@@ -36,9 +36,9 @@ cross_talk = os.path.join(os.path.abspath('.'), 'tvb-ccmeg/sss_params/ct_sparse.
 # Raw data should be in a directory called 'meg' with the same parent directory as the pipeline code
 pardir_meg = os.path.abspath('../meg')  # Directory containing MEG data
 rest_raw_dname = os.path.join(pardir_meg, 'release005/BIDSsep/derivatives_rest/aa/AA_nomovecomp/aamod_meg_maxfilt_00001')
-er_dname = os.path.join(pardir_meg, 'release004/BIDS_20190411/meg_emptyroom/')
+er_dname = os.path.join(pardir_meg, 'release004/BIDS_20190411/meg_emptyroom')
 trans_dname = os.path.join(pardir_meg, 'camcan_coreg/trans')
-raw_fname = os.path.join(rest_raw_dname, subject, '/mf2pt2_' + subject + '_ses-rest_task-rest_meg.fif')
+raw_fname = os.path.join(rest_raw_dname, subject, 'mf2pt2_' + subject + '_ses-rest_task-rest_meg.fif')
 er_fname = os.path.join(er_dname, subject, 'emptyroom/emptyroom_' + subject[4:] + '.fif')
 trans = os.path.join(trans_dname, subject + '-trans.fif')
 # FreeSurfer outputs should be in a directory called 'freesurfer' with same parent directory as the pipeline code
