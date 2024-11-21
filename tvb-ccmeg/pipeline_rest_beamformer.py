@@ -45,7 +45,7 @@ trans = os.path.join(trans_dname, subject + '-trans.fif')
 fs_dir = os.path.abspath('../freesurfer')
 
 # We want to save output at various points in the pipeline
-processed_dir = os.abspath('../processed_meg')
+processed_dir = os.path.abspath('../processed_meg')
 if not os.path.isdir(processed_dir):
     os.mkdir(processed_dir)
 output_dir = os.path.join(processed_dir, subject)
