@@ -88,7 +88,7 @@ raw.resample(new_sfreq)
 
 # Save processed Raw data
 
-raw.save(output_dir + 'sensor_processed_meg.fif', overwrite=True)
+raw.save(os.path.join(output_dir, 'sensor_processed_meg.fif'), overwrite=True)
 
 # Compute data covariance from two minutes of raw recording
 if ICA:
