@@ -15,7 +15,7 @@ source $FREESURFER_HOME/SetUpFreeSurfer.sh
 shopt -s nullglob
 
 #Define and create output directory
-SUBJECTS_DIR="$(pwd)/_Data/mri/freesurfer/"
+SUBJECTS_DIR="$(pwd)/_Data/mri/freesurfer"
 
 if [ ! -e "$(pwd)/_Data/mri/freesurfer" ]; then
   mkdir -p "$(pwd)/_Data/mri/freesurfer"
@@ -25,7 +25,7 @@ else
 fi
 
 #Define input directory
-rawdir="$(pwd)/_Data/mri/raw/"
+rawdir="$(pwd)/_Data/mri/raw"
 cd $rawdir
 
 #Define current subject and start job
