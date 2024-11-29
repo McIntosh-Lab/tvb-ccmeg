@@ -24,9 +24,7 @@ Dependencies have been loaded in an apptainer (written by Patrick Mahon), that c
 
 The scripts were run in python 3.11.4 for publication. They may work with other versions of python but are not guaranteed to function correctly.
 
-## Code Usage
-
-### Raw data
+## Raw data
 
 To adhere to the [lab SOP](https://github.com/McIntosh-Lab/Standard-Operating-Procedures), data will need to be copied from the `~/projects/` directory into your `~/scratch`.
 
@@ -41,7 +39,7 @@ The parcellations created by the FreeSurfer analysis are stored in `~/projects/d
   - The MRI parcellations created by the FreeSurfer
   - Optionally, the raw T1w data files for each participant are located in `~/projects/def-rmcintos/Cam-CAN/mri/raw/`.
 
-### Setting up the pipeline directory
+## Setting up the pipeline directory
 
 This data needs to be moved into a `/_Data` directory inside of the pipelines parent directory.
 
@@ -62,7 +60,7 @@ sbatch ./batch_scripts/submit_transfer_file_job.sh
 
 If you want to re-run the FreeSurfer analysis then uncomment line 20 of `./batch_scripts/submit_transfer_file_job.sh` and comment line 25. This will copy the raw MRI data and you will then need to run the FreeSurfer pipeline.
 
-### Running the FreeSurfer pipeline (optional)
+## Running the FreeSurfer pipeline (optional)
 To run the FreeSurfer pipeline use the following code blocks:
 
 ```
@@ -76,7 +74,7 @@ sbatch ./freesurfer_scripts/freesurfer_run_sub-CC320022.sh
 sbatch ./freesurfer_scripts/freesurfer_run_sub-CC721704.sh
 ```
 
-### Running the pipeline
+## Running the MEG pipeline
 
 There are two booleans in `./tvb-ccmeg/pipeline_rest_beamformer.py` that should be considered prior to running the script that control the use of ICA vs. SSP for motion correction (line 57) and surface mesh vs. volumetric beamformers (line 61). The defaults reflect the settings used to create the processed MEG data stored in "**_UPDATE PATH WHEN KNOWN_**".
 
