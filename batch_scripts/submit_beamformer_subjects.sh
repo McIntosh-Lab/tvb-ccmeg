@@ -74,12 +74,12 @@
 #!/bin/bash
 
 # Sourcing freesurfer
-module load freesurfer
-source $EBROOTFREESURFER/FreeSurferEnv.sh
+# module load freesurfer
+# source $EBROOTFREESURFER/FreeSurferEnv.sh
 
 # Rest of your script
 
-SUBMIT_SUBJECT_SCRIPT_PATH="$HOME/projects/ctb-rmcintos/data-sets/Cam-CAN/tvb-ccmeg/batch_scripts/submit_beamformer_subject.sh"
+SUBMIT_SUBJECT_SCRIPT_PATH="./batch_scripts/submit_beamformer_subject.sh"
 
 # Check if a file name is provided as an argument
 if [ $# -ne 3 ]; then
@@ -99,7 +99,7 @@ if [ ! -f "$SUBJECT_LIST" ]; then
 fi
 
 # Create processed_meg output repository
-if [ ! -e "./_Data/processed_meg"]; then
+if [ ! -e "./_Data/processed_meg" ]; then
     mkdir -p "./_Data/processed_meg"
     echo "Output directory created."
 else
