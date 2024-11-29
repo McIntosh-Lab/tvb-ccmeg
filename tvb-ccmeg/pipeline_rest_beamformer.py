@@ -45,7 +45,7 @@ raw_fname = os.path.join(rest_raw_dname, subject, 'ses-rest/meg', subject + '_se
 er_fname = os.path.join(er_dname, subject, 'emptyroom/emptyroom_' + subject[4:] + '.fif')
 trans = os.path.join(trans_dname, subject + '-trans.fif')
 # FreeSurfer outputs should be in a directory called 'freesurfer' with same parent directory as the pipeline code
-fs_dir = os.path.join(data_dir,'freesurfer')
+fs_dir = os.path.join(data_dir,'mri/freesurfer')
 
 # We want to save output at various points in the pipeline
 output_dir = os.path.join(data_dir, 'processed_meg',subject)

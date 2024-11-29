@@ -6,14 +6,14 @@
 #SBATCH --mem=8G
 #SBATCH --account=rrg-rmcintos
 
-#This script must be run after "./freesurfer_scripts/freesurfer_script.sh".
+#This script must be run after "$(pwd)/freesurfer_scripts/freesurfer_script.sh".
 
 #Load FreeSurfer
 export FREESURFER_HOME=/home/pmahon/research/INN/software/freesurfer/7.4.1
 source $FREESURFER_HOME/SetUpFreeSurfer.sh
 
 #Define output directory
-SUBJECTS_DIR="$(pwd)/_Data/freesurfer"
+SUBJECTS_DIR="$(pwd)/_Data/mri/freesurfer"
 
 #Run altered command for sub-CC721704
 recon-all -skullstrip -wsthresh 15 -clean-bm -no-wsgcaatlas -subjid sub-CC721704recon-all -autorecon2 -autorecon3 -subjid sub-CC721704

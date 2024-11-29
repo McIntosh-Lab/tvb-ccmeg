@@ -73,10 +73,6 @@
 
 #!/bin/bash
 
-# Sourcing freesurfer
-# module load freesurfer
-# source $EBROOTFREESURFER/FreeSurferEnv.sh
-
 # Rest of your script
 
 SUBMIT_SUBJECT_SCRIPT_PATH="./batch_scripts/submit_beamformer_subject.sh"
@@ -99,8 +95,8 @@ if [ ! -f "$SUBJECT_LIST" ]; then
 fi
 
 # Create processed_meg output repository
-if [ ! -e "./_Data/processed_meg" ]; then
-    mkdir -p "./_Data/processed_meg"
+if [ ! -e "$(pwd)/_Data/processed_meg" ]; then
+    mkdir -p "$(pwd)/_Data/processed_meg"
     echo "Output directory created."
 else
     echo "Output directory already created."

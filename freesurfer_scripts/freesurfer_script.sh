@@ -15,17 +15,17 @@ source $FREESURFER_HOME/SetUpFreeSurfer.sh
 shopt -s nullglob
 
 #Define and create output directory
-SUBJECTS_DIR="$(pwd)/_Data/freesurfer/"
+SUBJECTS_DIR="$(pwd)/_Data/mri/freesurfer/"
 
-if [ ! -e "$(pwd)/_Data/freesurfer" ]; then
-  mkdir -p "$(pwd)/_Data/freesurfer"
+if [ ! -e "$(pwd)/_Data/mri/freesurfer" ]; then
+  mkdir -p "$(pwd)/_Data/mri/freesurfer"
   echo "FreeSurfer directory created."
 else
   echo "FreeSurfer directory already exists."
 fi
 
 #Define input directory
-rawdir="$HOME/projects/def-rmcintos/Cam-CAN/mri/raw/"
+rawdir="$(pwd)/_Data/mri/raw/"
 cd $rawdir
 
 #Define current subject and start job
