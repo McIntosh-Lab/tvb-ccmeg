@@ -20,7 +20,7 @@ import sys
 
 if len(sys.argv) <= 1:
     raise ValueError("A subject directory has not been provided. Usage:"
-                     "\n\tpython beamformer_test.py <subject_name>")
+                     "\n\tpython pipeline_rest_beamformer.py <subject_name>")
 else:
     subject = sys.argv[1]
 
@@ -29,7 +29,7 @@ num_cpu = '16'
 os.environ['OMP_NUM_THREADS'] = num_cpu
 
 # Get paths to files
-pardir = os.path.abspath('..')  # Parent directory
+data_dir = os.path.abspath('./_Data')  # Parent directory
 
 # Identify calibration and cross-talk files (important for Maxwell filtering)
 calibration = os.path.join(os.path.abspath('.'), 'tvb-ccmeg/sss_params/sss_cal.dat')
@@ -37,21 +37,18 @@ cross_talk = os.path.join(os.path.abspath('.'), 'tvb-ccmeg/sss_params/ct_sparse.
 
 # Identify the files to process
 # Raw data should be in a directory called 'meg' with the same parent directory as the pipeline code
-pardir_meg = os.path.abspath('../meg/release005/BIDSsep')  # Directory containing MEG data
-rest_raw_dname = os.path.join(pardir_meg, 'rest')
-er_dname = os.path.join(pardir_meg, 'meg_emptyroom')
-trans_dname = os.path.join(pardir_meg, 'trans-halifax')
+meg_dir = os.path.join(data_dir,'meg/release005/BIDSsep')  # Directory containing MEG data
+rest_raw_dname = os.path.join(meg_dir, 'rest')
+er_dname = os.path.join(meg_dir, 'meg_emptyroom')
+trans_dname = os.path.join(meg_dir, 'trans-halifax')
 raw_fname = os.path.join(rest_raw_dname, subject, 'ses-rest/meg', subject + '_ses-rest_task-rest_meg.fif')
 er_fname = os.path.join(er_dname, subject, 'emptyroom/emptyroom_' + subject[4:] + '.fif')
 trans = os.path.join(trans_dname, subject + '-trans.fif')
 # FreeSurfer outputs should be in a directory called 'freesurfer' with same parent directory as the pipeline code
-fs_dir = os.path.abspath('../freesurfer')
+fs_dir = os.path.join(data_dir,'freesurfer')
 
 # We want to save output at various points in the pipeline
-processed_dir = os.abspath('../processed_meg')
-if not os.path.isdir(processed_dir):
-    os.mkdir(processed_dir)
-output_dir = os.path.join(processed_dir, subject)
+output_dir = os.path.join(data_dir, 'processed_meg',subject)
 if not os.path.isdir(output_dir):
 	os.mkdir(output_dir)
 
@@ -91,7 +88,7 @@ raw.resample(new_sfreq)
 
 # Save processed Raw data
 
-raw.save(output_dir + 'sensor_processed_meg.fif', overwrite=True)
+raw.save(os.path.join(output_dir, 'sensor_processed_meg.fif'), overwrite=True)
 
 # Compute data covariance from two minutes of raw recording
 if ICA:
@@ -134,7 +131,7 @@ else:
 	src = mne.setup_source_space(subject, subjects_dir=fs_dir) 
 
 fwd = mne.make_forward_solution(raw.info, trans=trans, src=src, bem=bem, meg=True, eeg=False, mindist=5.0, n_jobs=None)
-src.save(output_dir + 'src_beamformer-src.fif', overwrite=True)
+src.save(os.path.join(output_dir, 'src_beamformer-src.fif'), overwrite=True)
 
 # Compute the spatial filter
 filts = mne.beamformer.make_lcmv(raw.info, fwd, data_cov, reg=0.05, noise_cov=None, pick_ori='max-power', weight_norm='unit-noise-gain', rank='info')
@@ -144,7 +141,7 @@ filts = mne.beamformer.make_lcmv(raw.info, fwd, data_cov, reg=0.05, noise_cov=No
 # Apply beamformer
 start, stop = raw.time_as_index([30, 390])
 stc = mne.beamformer.apply_lcmv_raw(raw, filts, start=start, stop=stop)
-stc.save(output_dir + 'stc_beamformer', overwrite=True)
+stc.save(os.path.join(output_dir, 'stc_beamformer'), overwrite=True)
 
 # Extract timeseries for aparc parcellated brain regions (volumetric)
 # labels_aparc = fs_dir+subject+'/mri/aparc+aseg.mgz' # Volumetric
@@ -164,7 +161,7 @@ with open(os.path.join(output_dir, 'Schaefer_labels.txt'),'w') as outfile:
 # Extract timeseries for parcellations (surface mesh)
 # Aparc
 aparc_ts = mne.extract_label_time_course(stc, labels_aparc, src, mode='mean_flip')
-np.save(output_dir + 'parc_ts_beamformer_aparc', aparc_ts)
+np.save(os.path.join(output_dir, 'parc_ts_beamformer_aparc'), aparc_ts)
 # Schaefer
 schaefer_ts = mne.extract_label_time_course(stc, labels_schaefer, src, mode='mean_flip')
-np.save(output_dir + 'parc_ts_beamformer_Schaefer', schaefer_ts)
+np.save(os.path.join(output_dir, 'parc_ts_beamformer_Schaefer'), schaefer_ts)
