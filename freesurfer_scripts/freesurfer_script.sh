@@ -25,7 +25,7 @@ else
 fi
 
 #Define input directory
-rawdir="$(pwd)/_Data/mri/raw"
+rawdir="$(pwd)/_Data/mri/raw/"
 cd $rawdir
 
 #Define current subject and start job
