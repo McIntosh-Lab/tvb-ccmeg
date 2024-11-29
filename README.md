@@ -22,7 +22,7 @@ The dependencies for this analysis are as follows.
    
 Dependencies have been loaded in an apptainer (written by Patrick Mahon), that can be located at `~/projects/def-rmcintos/data-sets/meg_environment.sif`.
 
-The scripts were run in python 3.11.4 for publication. They may work with other versions of python and matlab but are not guaranteed to function correctly.
+The scripts were run in python 3.11.4 for publication. They may work with other versions of python but are not guaranteed to function correctly.
 
 ## Code Usage
 
@@ -37,39 +37,48 @@ The raw MEG data is located in `~/projects/def-rmcintos/Cam-CAN/meg`. This direc
   - The emptyroom recordings for each participant
   - the transformation files
 
-The raw structural MRI data is located in `~/projects/def-rmcintos/Cam-CAN/mri/raw/`. This directory contains:
-  - The raw T1w data files for each participant
-  - Optionally, the parcellations created by the freesurfer analysis are stored in `~/projects/def-rmcintos/data-sets/Cam-CAN/MEG/freesurfer/`
+The parcellations created by the FreeSurfer analysis are stored in `~/projects/def-rmcintos/data-sets/Cam-CAN/MEG/freesurfer/`. This contains:
+  - The MRI parcellations created by the FreeSurfer
+  - Optionally, the raw T1w data files for each participant are located in `~/projects/def-rmcintos/Cam-CAN/mri/raw/`.
 
 ### Setting up the pipeline directory
 
 This data needs to be moved into a `/_Data` directory inside of the pipelines parent directory.
 
-To create the appropriate directory tree and copy both the apptainer file and the MEG raw data, use the following commands:
-
 ```
 cd ~/scratch/
 git clone <insert https URL>
 cd tvb-ccmeg
+```
+
+Once inside the parent directory of the git repository, ALL of the following instructions are to be run from this directory. As the batch scripts require a specific directory structure
+
+Use the following code block to create the appropriate directory structure and copy the apptainer file, the MEG raw data and the FreeSurfer parcellations:
+
+```
 cp ~/projects/def-rmcintos/data-sets/meg_environment.sif .
-mkdir _Data
-rsync -avzh --no-g --no-p --partial --progress /home/jsolomon/projects/def-rmcintos/Cam-CAN/meg ./_Data/
+sbatch ./batch_scripts/submit_transfer_file_job.sh  
 ```
 
-To copy the MRI data you can run either of the following code blocks:
+If you want to re-run the FreeSurfer analysis then uncomment line 20 of `./batch_scripts/submit_transfer_file_job.sh` and comment line 25. This will copy the raw MRI data and you will then need to run the FreeSurfer pipeline.
 
-- To copy the raw data and run the freesurfer scripts
+### Running the FreeSurfer pipeline (optional)
+To run the FreeSurfer pipeline use the following code blocks:
+
 ```
-#ADD LINES TO COPY MRI DATA AND SUBMIT MRI SCRIPTS IF WE DECIDE THAT IT THEY CANNOT BE POINTED AT ~/projects/
+sbatch ./freesurfer_scripts/freesurfer_script.sh
 ```
-- To copy the parcellated outputs
+
+Once this job is completed then run:
+
 ```
-rsync -avzh --no-g --no-p --partial --progress ~/projects/def-rmcintos/data-sets/Cam-CAN/MEG/freesurfer ./_Data/
+sbatch ./freesurfer_scripts/freesurfer_run_sub-CC320022.sh
+sbatch ./freesurfer_scripts/freesurfer_run_sub-CC721704.sh
 ```
 
 ### Running the pipeline
 
-There are two booleans in `./tvb-ccmeg/pipeline_rest_beamformer.py` that should be considered prior to running the script that control the use of ICA vs. SSP for motion correction and surface mesh vs. volumetric beamformers. The defaults reflect the settings used to create the processed MEG data stored in "**_UPDATE PATH WHEN KNOWN_**".
+There are two booleans in `./tvb-ccmeg/pipeline_rest_beamformer.py` that should be considered prior to running the script that control the use of ICA vs. SSP for motion correction (line 57) and surface mesh vs. volumetric beamformers (line 61). The defaults reflect the settings used to create the processed MEG data stored in "**_UPDATE PATH WHEN KNOWN_**".
 
 Once the data is loaded, the pipeline can be run using the batch script `./batch_scripts/submit_beamformer_subjects.sh`.
 
@@ -80,4 +89,3 @@ To submit the job ensure that the working directory is the git repository's pare
 ```
 
 This will create the processed MEG data files in `./_Data/processed_meg/`.
-
