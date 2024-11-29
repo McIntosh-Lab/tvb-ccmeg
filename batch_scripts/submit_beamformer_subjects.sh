@@ -98,6 +98,14 @@ if [ ! -f "$SUBJECT_LIST" ]; then
     exit 1
 fi
 
+# Create processed_meg output repository
+if [ ! -e "./_Data/processed_meg"]; then
+    mkdir -p "./_Data/processed_meg"
+    echo "Output directory created."
+else
+    echo "Output directory already created."
+fi
+
 # Iterate over each line in the file
 while IFS= read -r subject_name; do
     # Submit a Slurm job for each line
