@@ -37,28 +37,29 @@ cross_talk = os.path.join(os.path.abspath('.'), 'tvb-ccmeg/sss_params/ct_sparse.
 
 # Identify the files to process
 # Raw data should be in a directory called 'meg' with the same parent directory as the pipeline code
-meg_dir = os.path.join(data_dir,'meg/release005/BIDSsep')  # Directory containing MEG data
-rest_raw_dname = os.path.join(meg_dir, 'rest')
-er_dname = os.path.join(meg_dir, 'meg_emptyroom')
-trans_dname = os.path.join(meg_dir, 'trans-halifax')
-raw_fname = os.path.join(rest_raw_dname, subject, 'ses-rest/meg', subject + '_ses-rest_task-rest_meg.fif')
+
+meg_dir = os.path.join(data_dir, 'meg')  # Directory containing MEG data
+rest_raw_dname = os.path.join(meg_dir, 'release005/BIDSsep/derivatives_rest/aa/AA_nomovecomp/aamod_meg_maxfilt_00001')
+er_dname = os.path.join(meg_dir, 'release004/BIDS_20190411/meg_emptyroom')
+trans_dname = os.path.join(meg_dir, 'camcan_coreg/trans')
+raw_fname = os.path.join(meg_dir, subject, 'mf2pt2_' + subject + '_ses-rest_task-rest_meg.fif')
 er_fname = os.path.join(er_dname, subject, 'emptyroom/emptyroom_' + subject[4:] + '.fif')
 trans = os.path.join(trans_dname, subject + '-trans.fif')
 # FreeSurfer outputs should be in a directory called 'freesurfer' with same parent directory as the pipeline code
 fs_dir = os.path.join(data_dir,'mri/freesurfer')
 
 # We want to save output at various points in the pipeline
-output_dir = os.path.join(data_dir, 'processed_meg',subject)
+output_dir = os.path.join(data_dir, 'processed_meg', subject)
 if not os.path.isdir(output_dir):
 	os.mkdir(output_dir)
 
-# Set ECG / EOG correction method (options are ICA and SSP, the default is ICA)
+# Set ECG / EOG correction method (options are ICA and SSP, setting ICA to False uses SSP)
 
-ICA = True
+ICA = False
 
-# Pick either volumetric or surface mesh beamformers (default is volumetric)
+# Pick either volumetric or surface mesh beamformers (setting Vol to False uses surface mesh)
 
-Vol = True
+Vol = False
 
 # Read resting-state data
 raw = preprocess.read_data(raw_fname)
