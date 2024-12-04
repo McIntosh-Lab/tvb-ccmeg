@@ -1,6 +1,6 @@
 #!/bin/bash
-#SBATCH --output=./logs/copy_data/output/job_output_%j.txt
-#SBATCH --error=./logs/copy_data/error/job_error_%j.txt
+#SBATCH --output=./logs/copy_data/output/job_output_%j.out
+#SBATCH --error=./logs/copy_data/error/job_error_%j.err
 #SBATCH --ntasks=1
 #SBATCH --time=24:00:00
 #SBATCH --mem=64G

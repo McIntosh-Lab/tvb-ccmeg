@@ -42,7 +42,7 @@ meg_dir = os.path.join(data_dir, 'meg')  # Directory containing MEG data
 rest_raw_dname = os.path.join(meg_dir, 'release005/BIDSsep/derivatives_rest/aa/AA_nomovecomp/aamod_meg_maxfilt_00001')
 er_dname = os.path.join(meg_dir, 'release004/BIDS_20190411/meg_emptyroom')
 trans_dname = os.path.join(meg_dir, 'camcan_coreg/trans')
-raw_fname = os.path.join(meg_dir, subject, 'mf2pt2_' + subject + '_ses-rest_task-rest_meg.fif')
+raw_fname = os.path.join(rest_raw_dname, subject, 'mf2pt2_' + subject + '_ses-rest_task-rest_meg.fif')
 er_fname = os.path.join(er_dname, subject, 'emptyroom/emptyroom_' + subject[4:] + '.fif')
 trans = os.path.join(trans_dname, subject + '-trans.fif')
 # FreeSurfer outputs should be in a directory called 'freesurfer' with same parent directory as the pipeline code

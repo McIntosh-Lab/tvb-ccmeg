@@ -9,6 +9,8 @@
 # License: BSD (3-clause)
 
 import mne
+import os
+import numpy as np
 
 def setup_source_space(subject, subjects_dir):
     # Requires BEM surfaces to be computed in FreeSurfer directory
