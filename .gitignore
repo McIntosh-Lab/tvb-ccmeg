@@ -88,16 +88,22 @@ ENV/
 # Rope project settings
 .ropeproject
 
-
 # tmp files
 .ini~
 *.swp
+
+# data files
+_Data/
+
+# log files from cedar
+logs/
+
+# environment apptainer
+meg_environment.sif
 
 # VS Studio code
 .vscode/**
 data
 
-
 # Mac
-
 .DS_Store

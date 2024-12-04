@@ -1,6 +1,6 @@
 #!/bin/bash
-#SBATCH --output=./batch_scripts/logs/job_output_%j.txt
-#SBATCH --error=./batch_scripts/logs/job_error_%j.txt
+#SBATCH --output=./logs/pipeline/output/job_output_%j.out
+#SBATCH --error=./logs/pipeline/error/job_error_%j.err
 #SBATCH --ntasks=1
 #SBATCH --time=02:00:00
 #SBATCH --mem=64G
