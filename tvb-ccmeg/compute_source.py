@@ -9,6 +9,8 @@
 # License: BSD (3-clause)
 
 import mne
+import os
+import numpy as np
 
 def setup_source_space(subject, subjects_dir):
     # Requires BEM surfaces to be computed in FreeSurfer directory
@@ -38,3 +40,28 @@ def compute_inverse_solution_rest(raw, inverse_operator, tmin=30, tmax=330):
     start, stop = raw.time_as_index([tmin, tmax])   # Range of time where we compute source activity
     stc = mne.minimum_norm.apply_inverse_raw(raw, inverse_operator, lambda2, start=start, stop=stop, method=method, pick_ori=None)
     return stc
+
+def parcellate_source_data(src, stc, subject, fs_dir, output_dir, Vol, mode='mean_flip'):
+    if Vol:
+        # Extract timeseries for aparc parcellated brain regions
+        labels_aparc_aseg = fs_dir+subject+'/mri/aparc+aseg.mgz'
+        with open(os.path.join(output_dir, 'aparc+aseg_labels.txt'),'w') as outfile:
+            outfile.write('\n'.join(str(lab.name) for lab in labels_aparc_aseg))
+        parc_ts_aparc_aseg = mne.extract_label_time_course(stc, labels_aparc_aseg, src, mode=mode)
+        np.save(output_dir + 'parc_ts_beamformer_aparc', parc_ts_aparc_aseg)
+    else:
+        # Aparc (FreeSurfer default)
+        labels_aparc = mne.read_labels_from_annot(subject, parc='aparc', subjects_dir=fs_dir)
+        with open(os.path.join(output_dir, 'aparc_labels.txt'),'w') as outfile:
+            outfile.write('\n'.join(str(lab.name) for lab in labels_aparc))
+        # Schaefer
+        labels_schaefer = mne.read_labels_from_annot(subject, parc='Schaefer2018_200Parcels_17Networks_order', subjects_dir=fs_dir)
+        with open(os.path.join(output_dir, 'Schaefer_labels.txt'),'w') as outfile:
+            outfile.write('\n'.join(str(lab.name) for lab in labels_schaefer))
+        # Extract timeseries for parcellations
+        # Aparc
+        aparc_ts = mne.extract_label_time_course(stc, labels_aparc, src, mode=mode)
+        np.save(os.path.join(output_dir, 'parc_ts_beamformer_aparc'), aparc_ts)
+        # Schaefer
+        schaefer_ts = mne.extract_label_time_course(stc, labels_schaefer, src, mode=mode)
+        np.save(os.path.join(output_dir, 'parc_ts_beamformer_Schaefer'), schaefer_ts)

@@ -42,7 +42,7 @@ meg_dir = os.path.join(data_dir, 'meg')  # Directory containing MEG data
 rest_raw_dname = os.path.join(meg_dir, 'release005/BIDSsep/derivatives_rest/aa/AA_nomovecomp/aamod_meg_maxfilt_00001')
 er_dname = os.path.join(meg_dir, 'release004/BIDS_20190411/meg_emptyroom')
 trans_dname = os.path.join(meg_dir, 'camcan_coreg/trans')
-raw_fname = os.path.join(meg_dir, subject, 'mf2pt2_' + subject + '_ses-rest_task-rest_meg.fif')
+raw_fname = os.path.join(rest_raw_dname, subject, 'mf2pt2_' + subject + '_ses-rest_task-rest_meg.fif')
 er_fname = os.path.join(er_dname, subject, 'emptyroom/emptyroom_' + subject[4:] + '.fif')
 trans = os.path.join(trans_dname, subject + '-trans.fif')
 # FreeSurfer outputs should be in a directory called 'freesurfer' with same parent directory as the pipeline code
@@ -144,25 +144,5 @@ start, stop = raw.time_as_index([30, 390])
 stc = mne.beamformer.apply_lcmv_raw(raw, filts, start=start, stop=stop)
 stc.save(os.path.join(output_dir, 'stc_beamformer'), overwrite=True)
 
-# Extract timeseries for aparc parcellated brain regions (volumetric)
-# labels_aparc = fs_dir+subject+'/mri/aparc+aseg.mgz' # Volumetric
-# parc_ts_aparc = mne.extract_label_time_course(stc, labels_aparc, src, mode='auto')
-# np.save(output_dir + 'parc_ts_beamformer_aparc', parc_ts_aparc)
-
-# Read labels from parcellation files and save to text files
-# Aparc (FreeSurfer default)
-labels_aparc = mne.read_labels_from_annot(subject, parc='aparc', subjects_dir=fs_dir)
-with open(os.path.join(output_dir, 'aparc_labels.txt'),'w') as outfile:
-    outfile.write('\n'.join(str(lab.name) for lab in labels_aparc))
-# Schaefer
-labels_schaefer = mne.read_labels_from_annot(subject, parc='Schaefer2018_200Parcels_17Networks_order', subjects_dir=fs_dir)
-with open(os.path.join(output_dir, 'Schaefer_labels.txt'),'w') as outfile:
-    outfile.write('\n'.join(str(lab.name) for lab in labels_schaefer))
-
-# Extract timeseries for parcellations (surface mesh)
-# Aparc
-aparc_ts = mne.extract_label_time_course(stc, labels_aparc, src, mode='mean_flip')
-np.save(os.path.join(output_dir, 'parc_ts_beamformer_aparc'), aparc_ts)
-# Schaefer
-schaefer_ts = mne.extract_label_time_course(stc, labels_schaefer, src, mode='mean_flip')
-np.save(os.path.join(output_dir, 'parc_ts_beamformer_Schaefer'), schaefer_ts)
+# Parcellate_Source_Data
+compute_source.parcellate_source_data(src, stc, subject, fs_dir, output_dir, Vol)
