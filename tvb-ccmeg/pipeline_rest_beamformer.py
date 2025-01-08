@@ -49,7 +49,7 @@ trans = os.path.join(trans_dname, subject + '-trans.fif')
 fs_dir = os.path.join(data_dir,'mri/freesurfer')
 
 # We want to save output at various points in the pipeline
-output_dir = os.path.join(data_dir, 'processed_meg', subject)
+output_dir = os.path.join(data_dir, 'processed_meg_SSP', subject)
 if not os.path.isdir(output_dir):
 	os.mkdir(output_dir)
 
@@ -90,6 +90,12 @@ raw.resample(new_sfreq)
 # Save processed Raw data
 
 raw.save(os.path.join(output_dir, 'sensor_processed_meg.fif'), overwrite=True)
+
+# Calculate PSD
+n_fft=256
+raw_psd,freqs = raw.compute_psd(method='welch',fmin=0, fmax=h_freq, n_fft = n_fft).get_data(return_freqs=True)
+np.save(os.path.join(output_dir, 'sensor_PSD'), raw_psd)
+np.save(os.path.join(output_dir, 'PSD_freq'), freqs)
 
 # Compute data covariance from two minutes of raw recording
 if ICA:
@@ -145,4 +151,9 @@ stc = mne.beamformer.apply_lcmv_raw(raw, filts, start=start, stop=stop)
 stc.save(os.path.join(output_dir, 'stc_beamformer'), overwrite=True)
 
 # Parcellate_Source_Data
-compute_source.parcellate_source_data(src, stc, subject, fs_dir, output_dir, Vol)
+labels_aparc, labels_schaefer, parc_ts_aparc, parc_ts_schaefer = compute_source.parcellate_source_data(src, stc, subject, fs_dir, output_dir, Vol, mode = 'mean_flip')
+
+# Calculate Source PSD
+parc_ts_aparc_PSD, source_PSD_freq = mne.time_frequency.psd_array_welch(parc_ts_aparc,fmin = 0, fmax = h_freq, sfreq = new_sfreq, n_fft = n_fft)
+np.save(os.path.join(output_dir, 'parc_ts_beamformer_aparc_PSD'), parc_ts_aparc_PSD)
+np.save(os.path.join(output_dir, 'source_PSD_freq'), source_PSD_freq)

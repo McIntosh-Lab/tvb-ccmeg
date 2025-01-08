@@ -49,6 +49,7 @@ def parcellate_source_data(src, stc, subject, fs_dir, output_dir, Vol, mode='mea
             outfile.write('\n'.join(str(lab.name) for lab in labels_aparc_aseg))
         parc_ts_aparc_aseg = mne.extract_label_time_course(stc, labels_aparc_aseg, src, mode=mode)
         np.save(output_dir + 'parc_ts_beamformer_aparc', parc_ts_aparc_aseg)
+        return labels_aparc_aseg, parc_ts_aparc_aseg
     else:
         # Aparc (FreeSurfer default)
         labels_aparc = mne.read_labels_from_annot(subject, parc='aparc', subjects_dir=fs_dir)
@@ -65,3 +66,4 @@ def parcellate_source_data(src, stc, subject, fs_dir, output_dir, Vol, mode='mea
         # Schaefer
         schaefer_ts = mne.extract_label_time_course(stc, labels_schaefer, src, mode=mode)
         np.save(os.path.join(output_dir, 'parc_ts_beamformer_Schaefer'), schaefer_ts)
+        return labels_aparc, labels_schaefer, aparc_ts, schaefer_ts
