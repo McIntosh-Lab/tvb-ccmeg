@@ -151,7 +151,7 @@ stc = mne.beamformer.apply_lcmv_raw(raw, filts, start=start, stop=stop)
 stc.save(os.path.join(output_dir, 'stc_beamformer'), overwrite=True)
 
 # Morph to fsAverage
-stc_fsAvg = morph_2_fsaverage(stc, fs_dir, subject)
+stc_fsAvg = compute_source.morph_2_fsaverage(stc, fs_dir, subject)
 stc_fsAvg.save(os.path.join(output_dir, 'stc_beamformer'), overwrite=True)
 
 
