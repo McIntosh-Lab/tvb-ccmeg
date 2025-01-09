@@ -41,6 +41,11 @@ def compute_inverse_solution_rest(raw, inverse_operator, tmin=30, tmax=330):
     stc = mne.minimum_norm.apply_inverse_raw(raw, inverse_operator, lambda2, start=start, stop=stop, method=method, pick_ori=None)
     return stc
 
+def morph_2_fsaverage(stc, fs_dir, subject):
+    morph = mne.compute_source_morph(stc, subject_from=subject, subject_to='fsaverage', subjects_dir=fs_dir)
+    stc_fsavg = morph.apply(stc)
+    return stc_fsavg
+
 def parcellate_source_data(src, stc, subject, fs_dir, output_dir, Vol, mode='mean_flip'):
     if Vol:
         # Extract timeseries for aparc parcellated brain regions

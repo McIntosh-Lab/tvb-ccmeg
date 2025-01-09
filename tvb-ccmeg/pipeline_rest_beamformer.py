@@ -150,6 +150,11 @@ start, stop = raw.time_as_index([30, 390])
 stc = mne.beamformer.apply_lcmv_raw(raw, filts, start=start, stop=stop)
 stc.save(os.path.join(output_dir, 'stc_beamformer'), overwrite=True)
 
+# Morph to fsAverage
+stc_fsAvg = morph_2_fsaverage(stc, fs_dir, subject)
+stc_fsAvg.save(os.path.join(output_dir, 'stc_beamformer'), overwrite=True)
+
+
 # Parcellate_Source_Data
 labels_aparc, labels_schaefer, parc_ts_aparc, parc_ts_schaefer = compute_source.parcellate_source_data(src, stc, subject, fs_dir, output_dir, Vol, mode = 'mean_flip')
 
