@@ -6,7 +6,7 @@
 #
 # Authors: Simon Dobri <simon_dobri@sfu.ca>
 #
-# License: BSD (3-clause)
+# License: Apache 2.0
 
 import mne
 
