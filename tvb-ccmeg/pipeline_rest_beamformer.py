@@ -6,7 +6,7 @@
 #
 # Author: Simon Dobri <simon_dobri@sfu.ca>
 #
-# License: BSD (3-clause)
+# License: Apache 2.0
 
 import mne              # Need MNE Python
 import preprocess       # Module with all the preprocessing functions
