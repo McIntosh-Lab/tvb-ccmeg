@@ -49,13 +49,13 @@ trans = os.path.join(trans_dname, subject + '-trans.fif')
 fs_dir = os.path.join(data_dir,'mri/freesurfer')
 
 # We want to save output at various points in the pipeline
-output_dir = os.path.join(data_dir, 'processed_meg_SSP', subject)
+output_dir = os.path.join(data_dir, 'processed_meg', subject)
 if not os.path.isdir(output_dir):
 	os.mkdir(output_dir)
 
 # Set ECG / EOG correction method (options are ICA and SSP, setting ICA to False uses SSP)
 
-ICA = False
+ICA = True
 
 # Pick either volumetric or surface mesh beamformers (setting Vol to False uses surface mesh)
 
@@ -84,8 +84,8 @@ else:
 	raw = preprocess.add_eog_projectors(raw)
 
 # Downsample raw data to speed up computation
-new_sfreq = 500
-raw.resample(new_sfreq)
+# new_sfreq = 500
+# raw.resample(new_sfreq)
 
 # Save processed Raw data
 
@@ -146,17 +146,17 @@ filts = mne.beamformer.make_lcmv(raw.info, fwd, data_cov, reg=0.05, noise_cov=No
 # pick_ori=None, weight_norm=None, depth=None, rank=None) #Vasily's settings
 
 # Apply beamformer
-start, stop = raw.time_as_index([30, 390])
+start, stop = raw.time_as_index([0, 390])
 stc = mne.beamformer.apply_lcmv_raw(raw, filts, start=start, stop=stop)
 stc.save(os.path.join(output_dir, 'stc_beamformer'), overwrite=True)
 
 # Morph to fsAverage
-stc_fsAvg = compute_source.morph_2_fsaverage(stc, fs_dir, subject)
-stc_fsAvg.save(os.path.join(output_dir, 'stc_beamformer'), overwrite=True)
+# stc_fsAvg = compute_source.morph_2_fsaverage(stc, fs_dir, subject)
+# stc_fsAvg.save(os.path.join(output_dir, 'stc_beamformer'), overwrite=True)
 
 
 # Parcellate_Source_Data
-labels_aparc, labels_schaefer, parc_ts_aparc, parc_ts_schaefer = compute_source.parcellate_source_data(src, stc, subject, fs_dir, output_dir, Vol, mode = 'mean_flip')
+labels_aparc, labels_schaefer, parc_ts_aparc, parc_ts_schaefer = compute_source.parcellate_source_data(src, stc, subject, fs_dir, output_dir, Vol, mode = 'pca_flip')
 
 # Calculate Source PSD
 parc_ts_aparc_PSD, source_PSD_freq = mne.time_frequency.psd_array_welch(parc_ts_aparc,fmin = 0, fmax = h_freq, sfreq = new_sfreq, n_fft = n_fft)
