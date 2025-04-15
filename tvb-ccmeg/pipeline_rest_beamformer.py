@@ -85,7 +85,7 @@ else:
 
 # Downsample raw data to speed up computation
 sfreq = raw.info['sfreq']
-# raw.resample(new_sfreq)
+# raw.resample(sfreq)
 
 # Save processed Raw data
 
@@ -93,7 +93,7 @@ raw.save(os.path.join(output_dir, 'sensor_processed_meg.fif'), overwrite=True)
 
 # Calculate PSD
 n_fft=256
-raw_psd,freqs = raw.compute_psd(method='welch',fmin=0, fmax=h_freq, sfreq = sfreq, n_fft = n_fft).get_data(return_freqs=True)
+raw_psd,freqs = raw.compute_psd(method='welch',fmin=0, fmax=h_freq, n_fft = n_fft).get_data(return_freqs=True)
 np.save(os.path.join(output_dir, 'sensor_PSD'), raw_psd)
 np.save(os.path.join(output_dir, 'PSD_freq'), freqs)
 
