@@ -70,5 +70,5 @@ def parcellate_source_data(src, stc, subject, fs_dir, output_dir, Vol, mode='mea
         np.save(os.path.join(output_dir, 'parc_ts_beamformer_aparc'), aparc_ts)
         # Schaefer
         schaefer_ts = mne.extract_label_time_course(stc, labels_schaefer, src, mode=mode)
-        np.save(os.path.join(output_dir, 'parc_ts_beamformer_Schaefer'), schaefer_ts)
+        np.save(os.path.join(output_dir, 'parc_ts_beamformer_schaefer'), schaefer_ts)
         return labels_aparc, labels_schaefer, aparc_ts, schaefer_ts
