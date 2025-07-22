@@ -61,10 +61,27 @@ ICA = True
 
 Vol = False
 
+# Downsample boolean and default downsample factor
+
+downsamp = True
+downsamp_factor = 2
+
+# Generate MNE Python report for visual quality control
+report = mne.Report(title=subject+'_QC_report', raw_psd=True)
+
 # Read resting-state data
 raw = preprocess.read_data(raw_fname)
 raw.crop(tmin=30, tmax=390)
 raw.del_proj()                          # Don't want existing projectors, could add to preprocess.read_data() if we never want them
+
+# Add raw data to report
+report.add_raw(raw=raw, title='Raw')
+
+# Compute head position throughout recording and add to report
+head_pos = preprocess.compute_head_position(raw)
+report.add_figure(fig=mne.viz.plot_head_positions(head_pos, mode='traces', show=False), title='Head Motion')
+
+
 if ICA:
 	raw.pick(['meg', 'eog', 'ecg'])
 else:
@@ -75,6 +92,22 @@ l_freq = 1.0    # High pass frequency in Hz
 h_freq = 90     # Low pass frequency in Hz
 raw = preprocess.filter_data(raw,l_freq=l_freq,h_freq=h_freq)
 
+# Add filtered PSD to report
+report.add_figure(fig=raw.compute_psd(fmax=350).plot(show=False), title='Filtered')
+
+# Define epochs based on heartbeat artifacts
+ecg_epochs = mne.preprocessing.create_ecg_epochs(raw)
+ecg_before = ecg_epochs.average().apply_baseline(baseline=(None, -0.2))
+# Add to report
+report.add_evokeds(evokeds=ecg_before, titles='ECG Before')
+
+# Define epochs based on ocular artifacts
+eog_epochs = mne.preprocessing.create_eog_epochs(raw)
+eog_before = eog_epochs.average().apply_baseline(baseline=(None, -0.2))
+# Add plot of EOG artifacts to report
+report.add_evokeds(evokeds=eog_before, titles='EOG Before')
+
+
 # Remove heartbeat and eye movement artifacts
 if ICA:
 	pick_meg = mne.pick_types(raw.info, meg=True, eeg=False, stim=False, ref_meg=False)
@@ -83,9 +116,22 @@ else:
 	raw = preprocess.add_ecg_projectors(raw)
 	raw = preprocess.add_eog_projectors(raw)
 
+# Add plot of corrected ECG epochs to report
+ecg_after = mne.Epochs(raw, ecg_epochs.events, tmin=-0.5, tmax=0.5)
+ecg_after = ecg_after.average().apply_baseline(baseline=(None, -0.2))
+report.add_evokeds(evokeds=ecg_after, titles='ECG After')
+
+# Add plot of corrected EOG epochs to report
+eog_after = mne.Epochs(raw, eog_epochs.events, tmin=-0.5, tmax=0.5)
+eog_after = eog_after.average().apply_baseline(baseline=(None, -0.2))
+report.add_evokeds(evokeds=eog_after, titles='EOG After')
+
 # Downsample raw data to speed up computation
 sfreq = raw.info['sfreq']
-# raw.resample(sfreq)
+
+if downsamp:
+	sfreq = int(sfreq / downsamp_factor)
+	raw.resample(sfreq)
 
 # Save processed Raw data
 
@@ -93,9 +139,14 @@ raw.save(os.path.join(output_dir, 'sensor_processed_meg.fif'), overwrite=True)
 
 # Calculate PSD
 n_fft=500
+if downsamp:
+	n_fft = int(n_fft/downsamp_factor)
 raw_psd,freqs = raw.compute_psd(method='welch',fmin=0, fmax=h_freq, n_fft = n_fft).get_data(return_freqs=True)
 np.save(os.path.join(output_dir, 'sensor_PSD'), raw_psd)
 np.save(os.path.join(output_dir, 'PSD_freq'), freqs)
+
+# Add filtered PSD to report
+report.add_figure(fig=raw.compute_psd(fmax=h_freq).plot(show=False), title='Filtered Artifact Removed')
 
 # Compute data covariance from two minutes of raw recording
 if ICA:
@@ -151,8 +202,8 @@ stc = mne.beamformer.apply_lcmv_raw(raw, filts, start=start, stop=stop)
 stc.save(os.path.join(output_dir, 'stc_beamformer'), overwrite=True)
 
 # Morph to fsAverage
-# stc_fsAvg = compute_source.morph_2_fsaverage(stc, fs_dir, subject)
-# stc_fsAvg.save(os.path.join(output_dir, 'stc_beamformer'), overwrite=True)
+stc_fsAvg = compute_source.morph_2_fsaverage(stc, fs_dir, subject)
+stc_fsAvg.save(os.path.join(output_dir, 'stc_beamformer'), overwrite=True)
 
 
 # Parcellate_Source_Data
@@ -164,3 +215,6 @@ parc_ts_schaefer_PSD, source_PSD_freq = mne.time_frequency.psd_array_welch(parc_
 np.save(os.path.join(output_dir, 'parc_ts_beamformer_aparc_PSD'), parc_ts_aparc_PSD)
 np.save(os.path.join(output_dir, 'parc_ts_beamformer_schaefer_PSD'), parc_ts_schaefer_PSD)
 np.save(os.path.join(output_dir, 'source_PSD_freq'), source_PSD_freq)
+
+# Save report
+report.save(os.path.join(output_dir, 'report.html'), overwrite=True)
