@@ -42,7 +42,7 @@ def compute_inverse_solution_rest(raw, inverse_operator, tmin=30, tmax=330):
     return stc
 
 def morph_2_fsaverage(stc, fs_dir, subject):
-    morph = mne.compute_source_morph(stc, subject_from=subject, subject_to='fsaverage', subjects_dir=fs_dir)
+    morph = mne.compute_source_morph(stc, subject_from=subject, subject_to='fsaverage6', subjects_dir=fs_dir)
     stc_fsavg = morph.apply(stc)
     return stc_fsavg
 
