@@ -85,7 +85,7 @@ def filter_data(raw, l_freq=0.1, h_freq=100, line_freqs=(50,100)):
     return raw
 
 def fit_ICA(raw, reject, random_state, picks, method = "picard", n_components = 40):
-    ica = mne.preprocessing.ICA(n_components=40, method=method, random_state=random_state)
+    ica = mne.preprocessing.ICA(n_components=n_components, method=method, random_state=random_state)
     try:
         ica.fit(raw, picks=picks, reject=reject)
     except:
