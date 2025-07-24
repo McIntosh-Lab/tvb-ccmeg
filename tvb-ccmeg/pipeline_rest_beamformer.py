@@ -78,8 +78,8 @@ raw.del_proj()                          # Don't want existing projectors, could 
 report.add_raw(raw=raw, title='Raw')
 
 # Compute head position throughout recording and add to report
-head_pos = preprocess.compute_head_position(raw)
-report.add_figure(fig=mne.viz.plot_head_positions(head_pos, mode='traces', show=False), title='Head Motion')
+# head_pos = preprocess.compute_head_position(raw)
+# report.add_figure(fig=mne.viz.plot_head_positions(head_pos, mode='traces', show=False), title='Head Motion')
 
 
 if ICA:
@@ -106,7 +106,6 @@ eog_epochs = mne.preprocessing.create_eog_epochs(raw)
 eog_before = eog_epochs.average().apply_baseline(baseline=(None, -0.2))
 # Add plot of EOG artifacts to report
 report.add_evokeds(evokeds=eog_before, titles='EOG Before')
-
 
 # Remove heartbeat and eye movement artifacts
 if ICA:
@@ -141,7 +140,7 @@ raw.save(os.path.join(output_dir, 'sensor_processed_meg.fif'), overwrite=True)
 n_fft=500
 if downsamp:
 	n_fft = int(n_fft/downsamp_factor)
-raw_psd,freqs = raw.compute_psd(method='welch',fmin=0, fmax=h_freq, n_fft = n_fft).get_data(return_freqs=True)
+raw_psd, freqs = raw.compute_psd(method='welch',fmin=0, fmax=h_freq, n_fft = n_fft).get_data(return_freqs=True)
 np.save(os.path.join(output_dir, 'sensor_PSD'), raw_psd)
 np.save(os.path.join(output_dir, 'PSD_freq'), freqs)
 
@@ -203,8 +202,6 @@ stc.save(os.path.join(output_dir, 'stc_beamformer'), overwrite=True)
 
 # Morph to fsAverage
 stc_fsAvg = compute_source.morph_2_fsaverage(stc, fs_dir, subject)
-stc_fsAvg.save(os.path.join(output_dir, 'stc_beamformer'), overwrite=True)
-
 
 # Parcellate_Source_Data
 labels_aparc, labels_schaefer, parc_ts_aparc, parc_ts_schaefer = compute_source.parcellate_source_data(src, stc, subject, fs_dir, output_dir, Vol, mode = 'pca_flip')
