@@ -28,6 +28,8 @@ else:
 num_cpu = '16'
 os.environ['OMP_NUM_THREADS'] = num_cpu
 
+### FILE I/O ###
+
 # Get paths to files
 data_dir = os.path.abspath('./_Data')  # Parent directory
 
@@ -53,18 +55,22 @@ output_dir = os.path.join(data_dir, 'processed_meg', subject)
 if not os.path.isdir(output_dir):
 	os.mkdir(output_dir)
 
-# Set ECG / EOG correction method (options are ICA and SSP, setting ICA to False uses SSP)
+### USER DEFINED VARIABLES ###
 
+# Set ECG / EOG correction method (options are ICA and SSP, setting ICA to False uses SSP)
 ICA = True
 
 # Pick either volumetric or surface mesh beamformers (setting Vol to False uses surface mesh)
-
 Vol = False
 
 # Downsample boolean and default downsample factor
-
 downsamp = True
 downsamp_factor = 2
+
+# Add / remove head position plot from QC report (if using Cam-CAN maxfiltered data this variable needs to be False)
+plot_head_pos = False
+
+### RUN PIPELINE ###
 
 # Generate MNE Python report for visual quality control
 report = mne.Report(title=subject+'_QC_report', raw_psd=True)
@@ -78,8 +84,9 @@ raw.del_proj()                          # Don't want existing projectors, could 
 report.add_raw(raw=raw, title='Raw')
 
 # Compute head position throughout recording and add to report
-# head_pos = preprocess.compute_head_position(raw)
-# report.add_figure(fig=mne.viz.plot_head_positions(head_pos, mode='traces', show=False), title='Head Motion')
+if plot_head_pos:
+	head_pos = preprocess.compute_head_position(raw)
+	report.add_figure(fig=mne.viz.plot_head_positions(head_pos, mode='traces', show=False), title='Head Motion')
 
 
 if ICA:
