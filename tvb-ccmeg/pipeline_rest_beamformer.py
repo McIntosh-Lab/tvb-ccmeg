@@ -4,7 +4,7 @@
 #
 # Description: Script to test pipeline for TVB Cam-CAN MEG
 #
-# Author: Simon Dobri <simon_dobri@sfu.ca>
+# Authors: Simon Dobri <simon_dobri@sfu.ca> & Jack Solomon <jack_solomon@sfu.ca> $ Santiago Flores <santiago_flores_alonso@sfu.ca>
 #
 # License: BSD (3-clause)
 

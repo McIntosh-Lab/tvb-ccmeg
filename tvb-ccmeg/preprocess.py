@@ -4,7 +4,7 @@
 #
 # Description: functions used to preprocess Cam-CAN MEG data for pipeline
 #
-# Authors: Simon Dobri <simon_dobri@sfu.ca>
+# Authors: Simon Dobri <simon_dobri@sfu.ca> & Jack Solomon <jack_solomon@sfu.ca>
 #
 # License: BSD (3-clause)
 
