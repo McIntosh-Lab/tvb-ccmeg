@@ -74,19 +74,22 @@ def parcellate_source_data(src, stc, subject, fs_dir, output_dir, Vol, mode='mea
         np.save(os.path.join(output_dir, 'parc_ts_beamformer_schaefer'), schaefer_ts)
         return labels_aparc, labels_schaefer, aparc_ts, schaefer_ts
 
-def PSD_per_timeseries(stc, bands, window_len = 4, overlap = 2, norm_method = "z_score"):
+def PSD_per_timeseries(data, bands, sfreq, h_freq, n_fft, window = 'hann', overlap = 2, norm_method = "z_score"):
     """
     Computes the Power Spectral Density (PSD) and band power for each vertex
     in a SourceEstimate (stc) object.
 
     Parameters:
-        stc: mne.SourceEstimate
-            The source estimate containing vertex time series.
+        data (ndarray): numpy.ndarray
+            An array of time series to decompose.
+        sfreq (int): Sampling frequency of the data.
         bands (dict): Dictionary with band names and frequency ranges.
-        window_len (int): Integer defining the window size for the
-            Welch method. Defined using the formula window_len * sfreq.
-        overlap (int): Integer used to define the mount of overlap for the Welch method.
-            Defined by the formula (window_len * sfreq)//overlap.
+        h_freq (int): Integer defining the upper limit of the decomposition.
+        n_fft (int): FFT size.
+        window (string): window type for FFT. Default is 'hann'.
+        overlap (int): Amount of overlap between FFT windows. 
+            Default to 50% overlap (defined using the equation: n_fft//perc_overlap).
+        See https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.get_window.html for different window types.
         norm_method (string): either "z_score" or "percentile".
             Used to define the normalization protocol of the pwoer spectrum
 
@@ -97,27 +100,21 @@ def PSD_per_timeseries(stc, bands, window_len = 4, overlap = 2, norm_method = "z
             Average power for each frequency band per vertex.
     """
 
-
-    # Parameters
-    data = stc.data  # [n_vertices, n_times]
-    sfreq = stc.sfreq  # Sampling frequency
-    window_samples = int(window_len * sfreq)  # 4-second window in samples
-    overlap_samples = window_samples // overlap  # 50% overlap
+    n_overlap = n_fft // overlap
 
     # Compute PSD for all vertices
-    frequencies, psd = scipy.signal.welch(
-        data,
-        fs=sfreq,
-        window='hann',
-        nperseg=window_samples,
-        noverlap=overlap_samples,
-        scaling='density',
-        axis=1
-    )
+    psd, frequencies = mne.time_frequency.psd_array_welch(
+        data, 
+        fmin = 0, 
+        fmax = h_freq, 
+        sfreq = sfreq, 
+        n_fft = n_fft,
+        n_overlap=n_overlap,
+        window = window)
 
     # Normalize PSD
     if norm_method == "z_score":
-        psd_normalized = scipy.stats.zscore(psd)
+        psd_normalized = (psd - psd.mean(axis = 1, keepdims = True)) / np.std(psd, axis = 1, keepdims= True)
     elif norm_method =="percentile":
         psd_normalized = psd / psd.sum(axis=1, keepdims=True)
     else:

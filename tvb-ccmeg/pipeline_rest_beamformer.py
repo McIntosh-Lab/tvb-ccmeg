@@ -98,7 +98,6 @@ if plot_head_pos:
 	head_pos = preprocess.compute_head_position(raw)
 	report.add_figure(fig=mne.viz.plot_head_positions(head_pos, mode='traces', show=False), title='Head Motion')
 
-
 if ICA:
 	raw.pick(['meg', 'eog', 'ecg'])
 else:
@@ -157,12 +156,12 @@ raw.save(os.path.join(output_dir, 'sensor_processed_meg.fif'), overwrite=True)
 n_fft=500
 if downsamp:
 	n_fft = int(n_fft/downsamp_factor)
-raw_psd, freqs = raw.compute_psd(method='welch',fmin=0, fmax=h_freq, n_fft = n_fft).get_data(return_freqs=True)
+raw_psd, freqs = raw.compute_psd(method = 'welch', fmin = 0, fmax = h_freq, n_fft = n_fft).get_data(return_freqs = True)
 np.save(os.path.join(output_dir, 'sensor_PSD'), raw_psd)
 np.save(os.path.join(output_dir, 'PSD_freq'), freqs)
 
 # Add filtered PSD to report
-report.add_figure(fig=raw.compute_psd(fmax=h_freq).plot(show=False), title='Filtered Artifact Removed')
+report.add_figure(fig=raw.compute_psd(method = 'welch', fmin = 0, fmax=h_freq, n_fft = n_fft).plot(show = False), title = 'Filtered Artifact Removed')
 
 # Compute data covariance from two minutes of raw recording
 if ICA:
@@ -218,9 +217,10 @@ stc = mne.beamformer.apply_lcmv_raw(raw, filts, start=start, stop=stop)
 stc.save(os.path.join(output_dir, 'stc_beamformer'), overwrite=True)
 
 # Get PSDs from vertices
-psd_normalized, power_bands = compute_source.PSD_per_vertex(stc, bands)
-np.save(os.path.join(output_dir, 'PSD_normalized'), psd_normalized)
-np.save()
+stc_ts_PSD, source_PSD_freq, power_bands = compute_source.PSD_per_timeseries(stc, bands)
+stc_ts_PSD, source_PSD_freq = mne.time_frequency.psd_array_welch(stc.data, window = 'hann', n_overlap = n_fft // 2, fmin = 0, fmax = h_freq, sfreq = sfreq, n_fft = n_fft)
+np.save(os.path.join(output_dir, 'parc_ts_beamformer_schaefer_PSD'), stc_ts_PSD)
+np.save(os.path.join(output_dir, 'source_PSD_freq'), source_PSD_freq)
 
 # Morph to fsAverage
 stc_fsAvg = compute_source.morph_2_fsaverage(stc, fs_dir, subject)
