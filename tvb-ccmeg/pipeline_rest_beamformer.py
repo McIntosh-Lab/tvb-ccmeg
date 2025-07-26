@@ -217,7 +217,7 @@ stc = mne.beamformer.apply_lcmv_raw(raw, filts, start=start, stop=stop)
 stc.save(os.path.join(output_dir, 'stc_beamformer'), overwrite=True)
 
 # Get PSDs from vertices
-stc_ts_PSD, source_PSD_freq, power_bands = compute_source.PSD_per_timeseries(stc.data, bands, sfreq = sfreq, h_freq = h_freq, n_fft = n_fft)
+stc_ts_PSD, source_PSD_freq, stc_power_bands = compute_source.PSD_per_timeseries(stc.data, bands, sfreq = sfreq, h_freq = h_freq, n_fft = n_fft)
 np.save(os.path.join(output_dir, 'stc_ts_PSD'), stc_ts_PSD)
 np.save(os.path.join(output_dir, 'source_PSD_freq'), source_PSD_freq)
 
