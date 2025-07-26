@@ -153,7 +153,7 @@ if downsamp:
 raw.save(os.path.join(output_dir, 'sensor_processed_meg.fif'), overwrite=True)
 
 # Calculate PSD
-n_fft=500
+n_fft=1000
 if downsamp:
 	n_fft = int(n_fft/downsamp_factor)
 raw_psd, freqs = raw.compute_psd(method = 'welch', fmin = 0, fmax = h_freq, n_fft = n_fft).get_data(return_freqs = True)
