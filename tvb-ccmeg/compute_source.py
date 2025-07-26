@@ -11,6 +11,7 @@
 import mne
 import os
 import numpy as np
+import scipy
 
 def setup_source_space(subject, subjects_dir):
     # Requires BEM surfaces to be computed in FreeSurfer directory
@@ -72,3 +73,60 @@ def parcellate_source_data(src, stc, subject, fs_dir, output_dir, Vol, mode='mea
         schaefer_ts = mne.extract_label_time_course(stc, labels_schaefer, src, mode=mode)
         np.save(os.path.join(output_dir, 'parc_ts_beamformer_schaefer'), schaefer_ts)
         return labels_aparc, labels_schaefer, aparc_ts, schaefer_ts
+
+def PSD_per_timeseries(stc, bands, window_len = 4, overlap = 2, norm_method = "z_score"):
+    """
+    Computes the Power Spectral Density (PSD) and band power for each vertex
+    in a SourceEstimate (stc) object.
+
+    Parameters:
+        stc: mne.SourceEstimate
+            The source estimate containing vertex time series.
+        bands (dict): Dictionary with band names and frequency ranges.
+        window_len (int): Integer defining the window size for the
+            Welch method. Defined using the formula window_len * sfreq.
+        overlap (int): Integer used to define the mount of overlap for the Welch method.
+            Defined by the formula (window_len * sfreq)//overlap.
+        norm_method (string): either "z_score" or "percentile".
+            Used to define the normalization protocol of the pwoer spectrum
+
+    Returns:
+        psd_normalized: ndarray
+            Normalized PSD for each vertex.
+        band_powers: dict
+            Average power for each frequency band per vertex.
+    """
+
+
+    # Parameters
+    data = stc.data  # [n_vertices, n_times]
+    sfreq = stc.sfreq  # Sampling frequency
+    window_samples = int(window_len * sfreq)  # 4-second window in samples
+    overlap_samples = window_samples // overlap  # 50% overlap
+
+    # Compute PSD for all vertices
+    frequencies, psd = scipy.signal.welch(
+        data,
+        fs=sfreq,
+        window='hann',
+        nperseg=window_samples,
+        noverlap=overlap_samples,
+        scaling='density',
+        axis=1
+    )
+
+    # Normalize PSD
+    if norm_method == "z_score":
+        psd_normalized = scipy.stats.zscore(psd)
+    elif norm_method =="percentile":
+        psd_normalized = psd / psd.sum(axis=1, keepdims=True)
+    else:
+        raise ValueError("norm_method must be 'z_score' or 'percentile'.")
+
+    # Compute power for each frequency band
+    band_powers = {
+        band: psd_normalized[:, (frequencies >= fmin) & (frequencies <= fmax)].mean(axis=1)
+        for band, (fmin, fmax) in bands.items()
+    }
+
+    return psd_normalized, frequencies, band_powers

@@ -70,6 +70,16 @@ downsamp_factor = 2
 # Add / remove head position plot from QC report (if using Cam-CAN maxfiltered data this variable needs to be False)
 plot_head_pos = False
 
+# Define frequency bands of interest
+bands = {
+	'delta': (1, 4),
+	'theta': (4, 7),
+	'alpha': (8, 12),
+	'beta': (15, 29),
+	'g_low': (30, 59),
+	'g_high': (60, 90)
+}
+
 ### RUN PIPELINE ###
 
 # Generate MNE Python report for visual quality control
@@ -207,8 +217,14 @@ start, stop = raw.time_as_index([0, 390])
 stc = mne.beamformer.apply_lcmv_raw(raw, filts, start=start, stop=stop)
 stc.save(os.path.join(output_dir, 'stc_beamformer'), overwrite=True)
 
+# Get PSDs from vertices
+psd_normalized, power_bands = compute_source.PSD_per_vertex(stc, bands)
+np.save(os.path.join(output_dir, 'PSD_normalized'), psd_normalized)
+np.save()
+
 # Morph to fsAverage
 stc_fsAvg = compute_source.morph_2_fsaverage(stc, fs_dir, subject)
+stc_fsAvg.save(os.path.join(output_dir, 'stc_fsAverage_beamformer'), overwrite=True)
 
 # Parcellate_Source_Data
 labels_aparc, labels_schaefer, parc_ts_aparc, parc_ts_schaefer = compute_source.parcellate_source_data(src, stc, subject, fs_dir, output_dir, Vol, mode = 'pca_flip')
