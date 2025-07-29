@@ -11,6 +11,7 @@
 import mne              # Need MNE Python
 import preprocess       # Module with all the preprocessing functions
 import compute_source   # Module with functions to go from sensor space to source space
+import visualization	# Module with plotting functions
 import numpy as np      # Need for array operations
 import os
 import sys
@@ -69,6 +70,20 @@ downsamp_factor = 2
 
 # Add / remove head position plot from QC report (if using Cam-CAN maxfiltered data this variable needs to be False)
 plot_head_pos = False
+
+# Plotting options for source level PSD topoplots
+surfer_kwargs = dict(
+	surface='inflated',       # Surface type for visualization
+	hemi='lh',             # Split the brain into left and right hemispheres
+	subject='fsaverage',      # Subject to use for visualization (fsaverage is a template)
+	subjects_dir=fs_dir,      # Directory containing the subject's FreeSurfer data
+	views="medial",           # Initial view orientation (e.g., medial)
+	colormap='jet',           # Colormap for data visualization
+	time_unit="s",            # Units for time representation
+	size=(1100, 500),         # Size of the visualization window
+	smoothing_steps=5,        # Smoothing steps to apply to the data
+	colorbar=False            # Hide the colorbar in the visualization
+)
 
 # Define frequency bands of interest
 bands = {
@@ -224,6 +239,9 @@ np.save(os.path.join(output_dir, 'source_PSD_freq'), source_PSD_freq)
 # Morph to fsAverage
 stc_fsAvg = compute_source.morph_2_fsaverage(stc, fs_dir, subject)
 stc_fsAvg.save(os.path.join(output_dir, 'stc_fsAverage_beamformer'), overwrite=True)
+
+# Add source level PSD topomap to report
+report.add_figure(fig=compute_source.stc_band_power_plot(), title='Source Level Band Power')
 
 # Parcellate_Source_Data
 labels_aparc, labels_schaefer, parc_ts_aparc, parc_ts_schaefer = compute_source.parcellate_source_data(src, stc, subject, fs_dir, output_dir, Vol, mode = 'pca_flip')
