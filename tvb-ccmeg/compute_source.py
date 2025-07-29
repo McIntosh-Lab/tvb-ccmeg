@@ -45,7 +45,7 @@ def compute_inverse_solution_rest(raw, inverse_operator, tmin=30, tmax=330):
 def morph_2_fsaverage(stc, fs_dir, subject):
     morph = mne.compute_source_morph(stc, subject_from=subject, subject_to='fsaverage6', subjects_dir=fs_dir)
     stc_fsavg = morph.apply(stc)
-    return stc_fsavg
+    return stc_fsavg, morph
 
 def parcellate_source_data(src, stc, subject, fs_dir, output_dir, Vol, mode='mean_flip'):
     if Vol:
