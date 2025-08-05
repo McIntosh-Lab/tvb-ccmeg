@@ -8,12 +8,10 @@
 #
 # License: BSD (3-clause)
 
-import compute_source
 import mne
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy
-
 
 def stc_per_band(morph, power, stc, subject):
     """
@@ -135,4 +133,4 @@ def stc_band_power_plot(stc, band_powers, morph, subject, surfer_kwargs):
         # Plot the images in subplots
         brains_plot(i,band,axes,img_lateral,img_medial,img_dorsal)
     
-    return
+    return fig
