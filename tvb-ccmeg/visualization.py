@@ -126,9 +126,9 @@ def stc_band_power_plot(stc, band_powers, morph, subject, surfer_kwargs):
         band_powers_morph[:, i] = stc_band_morph.data.flatten()
 
         # Generate screenshots for lateral and medial views
-        img_lateral = generate_brain_screenshot(stc_band_morph, 'lateral', power, surfer_kwargs)
-        img_medial = generate_brain_screenshot(stc_band_morph, 'medial', power, surfer_kwargs)
-        img_dorsal = generate_brain_screenshot(stc_band_morph, 'dorsal', power, surfer_kwargs)
+        img_lateral = generate_brain_screenshot(stc_band_morph, 'lat', power, surfer_kwargs)
+        img_medial = generate_brain_screenshot(stc_band_morph, 'med', power, surfer_kwargs)
+        img_dorsal = generate_brain_screenshot(stc_band_morph, 'dor', power, surfer_kwargs)
 
         # Plot the images in subplots
         brains_plot(i,band,axes,img_lateral,img_medial,img_dorsal)

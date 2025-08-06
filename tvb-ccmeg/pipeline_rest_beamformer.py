@@ -77,12 +77,13 @@ surfer_kwargs = dict(
 	hemi='lh',             # Split the brain into left and right hemispheres
 	subject='fsaverage6',      # Subject to use for visualization (fsaverage is a template)
 	subjects_dir=fs_dir,      # Directory containing the subject's FreeSurfer data
-	views="medial",           # Initial view orientation (e.g., medial)
+	views="med",           # Initial view orientation (e.g., medial)
 	colormap='jet',           # Colormap for data visualization
 	time_unit="s",            # Units for time representation
 	size=(1100, 500),         # Size of the visualization window
 	smoothing_steps=5,        # Smoothing steps to apply to the data
-	colorbar=False            # Hide the colorbar in the visualization
+	colorbar=False,           # Hide the colorbar in the visualization
+	backend='matplotlib'
 )
 
 # Define frequency bands of interest
