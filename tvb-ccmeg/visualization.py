@@ -63,10 +63,10 @@ def generate_brain_screenshot(stc_band_morph, views, power, surfer_kwargs):
         surfer_kwargs['hemi'] = 'both'
     clim = dict(kind="value", lims=[0, max(power) / 2, max(power)]) #Colorband limits
     brain = stc_band_morph.plot(**surfer_kwargs, clim=clim)  # Plot the brain with the specified clim and additional arguments
-    img = brain.screenshot() # Capture the screenshot
-    brain.close()# Close the interactive brain object
+    #img = brain.screenshot() # Capture the screenshot
+    #brain.close()# Close the interactive brain object
 
-    return img
+    return brain
 
 def brains_plot(i, band, axes, img_lateral, img_medial, img_dorsal):
     """
