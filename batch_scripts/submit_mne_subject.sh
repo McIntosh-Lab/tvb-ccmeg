@@ -4,7 +4,7 @@
 #SBATCH --ntasks=1
 #SBATCH --time=01:00:00
 #SBATCH --mem=64G
-#SBATCH --account=rrg-rmcintos
+#SBATCH --account=def-rmcintos
 
 # submit_mne_subject.sh is used to excecute a python meg pipeline for a given 
 # subject directory, from that subjects parent directory.

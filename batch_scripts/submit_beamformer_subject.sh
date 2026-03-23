@@ -3,8 +3,8 @@
 #SBATCH --error=./logs/pipeline/error/job_error_%j.err
 #SBATCH --ntasks=1
 #SBATCH --time=02:00:00
-#SBATCH --mem=64G
-#SBATCH --account=rrg-rmcintos
+#SBATCH --mem=128G
+#SBATCH --account=def-rmcintos
 
 # submit_subject.sh is used to excecute a python meg pipeline for a given 
 # subject directory, from that subjects parent directory.
