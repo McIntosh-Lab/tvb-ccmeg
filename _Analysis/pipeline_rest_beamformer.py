@@ -9,9 +9,9 @@
 # License: BSD (3-clause)
 
 import mne              # Need MNE Python
-import preprocess       # Module with all the preprocessing functions
-import compute_source   # Module with functions to go from sensor space to source space
-import visualization    # Module with plotting functions
+from _Resources import preprocess       # Module with all the preprocessing functions
+from _Resources import compute_source   # Module with functions to go from sensor space to source space
+from _Resources import visualization    # Module with plotting functions
 import numpy as np      # Need for array operations
 import os
 import sys
